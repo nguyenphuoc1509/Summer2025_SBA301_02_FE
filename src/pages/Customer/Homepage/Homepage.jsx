@@ -4,6 +4,7 @@ import Carousel from "../../../components/Carousel";
 import { Film, Clock, ThumbsUp, Calendar, Star } from "lucide-react";
 import imgMovie from "../../../assets/images/movie_01.jpg";
 import MovieGrid from "../../../components/Movie/MovieGrid";
+
 // Predefined movie data for easy modification
 const moviesNowShowing = [
   {
@@ -98,10 +99,9 @@ const Homepage = () => {
   const [tab, setTab] = useState("now");
   const navigate = useNavigate();
   return (
-    <div className="pt-16 bg-gray-50">
+    <div className="bg-gray-50">
       {/* Main Carousel */}
       <Carousel />
-
       {/* Movies Section with Tabs */}
       <div className="container mx-auto py-12 px-4">
         <div className="mb-16">

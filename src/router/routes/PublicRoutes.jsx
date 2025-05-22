@@ -5,6 +5,11 @@ import NowShowingPage from "../../pages/Customer/Movie/NowShowingPage";
 import UpComingPage from "../../pages/Customer/Movie/UpComingPage";
 import MovieDetail from "../../pages/Customer/Movie/MovieDetail";
 import LoginCustomer from "../../pages/Customer/Auth/LoginCustomer";
+import MovieGenre from "../../pages/Customer/Cinema/MovieGenre";
+import Actor from "../../pages/Customer/Cinema/Actor";
+import Director from "../../pages/Customer/Cinema/Director";
+import MovieReview from "../../pages/Customer/Cinema/MovieReview";
+import MovieBlog from "../../pages/Customer/Cinema/MovieBlog";
 
 export const PublicRoutes = [
   {
@@ -25,6 +30,31 @@ export const PublicRoutes = [
   {
     path: ROUTES.MOVIE_DETAIL,
     element: <MovieDetail />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_GENRE,
+    element: <MovieGenre />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_ACTOR,
+    element: <Actor />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_DIRECTOR,
+    element: <Director />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_REVIEW,
+    element: <MovieReview />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_BLOG,
+    element: <MovieBlog />,
     layout: MainLayout,
   },
 ];
