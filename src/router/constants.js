@@ -15,4 +15,6 @@ export const ROUTES = {
 
   // Admin routes
   DASHBOARD: "/thong-ke",
+  USER_MANAGEMENT: "/quan-ly-nguoi-dung",
+  LOGIN_ADMIN: "/admin",
 };

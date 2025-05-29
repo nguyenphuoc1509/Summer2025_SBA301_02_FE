@@ -10,6 +10,8 @@ import Actor from "../../pages/Customer/Cinema/Actor";
 import Director from "../../pages/Customer/Cinema/Director";
 import MovieReview from "../../pages/Customer/Cinema/MovieReview";
 import MovieBlog from "../../pages/Customer/Cinema/MovieBlog";
+import LoginAdmin from "../../pages/Admin/Login/LoginAdmin";
+import { AuthLayout } from "../layouts/AuthLayout";
 
 export const PublicRoutes = [
   {
@@ -56,5 +58,10 @@ export const PublicRoutes = [
     path: ROUTES.MOVIE_BLOG,
     element: <MovieBlog />,
     layout: MainLayout,
+  },
+  {
+    path: ROUTES.LOGIN_ADMIN,
+    element: <LoginAdmin />,
+    layout: AuthLayout,
   },
 ];
