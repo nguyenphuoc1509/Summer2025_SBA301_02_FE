@@ -42,16 +42,32 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setIsLoggedIn(user.role === "user" || user.role === "member_user");
-      setIsMemberUser(user.role === "member_user");
-    }
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+
+      if (token && userData) {
+        const user = JSON.parse(userData);
+        setIsLoggedIn(true);
+        setIsMemberUser(user.role === "member_user");
+      } else {
+        setIsLoggedIn(false);
+        setIsMemberUser(false);
+      }
+    };
+
+    checkAuth();
+    // Add event listener for storage changes
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
     setIsMemberUser(false);
     navigate("/");
@@ -115,6 +131,7 @@ const Header = () => {
               }
               options={[
                 { label: "Thông tin cá nhân", href: "/thong-tin-ca-nhan" },
+                { label: "Thông tin vé đã mua", href: "/thong-tin-ve" },
                 { label: "Đăng xuất", href: "#", onClick: handleLogout },
               ]}
             />
@@ -194,6 +211,12 @@ const Header = () => {
                   className="block px-4 py-2 text-gray-600 hover:bg-orange-50 hover:text-orange-500"
                 >
                   Thông tin cá nhân
+                </Link>
+                <Link
+                  to="/thong-tin-ve"
+                  className="block px-4 py-2 text-gray-600 hover:bg-orange-50 hover:text-orange-500"
+                >
+                  Thông tin vé đã mua
                 </Link>
                 <button
                   onClick={handleLogout}

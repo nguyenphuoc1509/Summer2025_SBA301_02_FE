@@ -1,0 +1,58 @@
+export const events = [
+  {
+    id: 1,
+    title: "Khuyến mãi mùa hè",
+    image: "https://www.galaxycine.vn/media/2025/5/26/1135_1748246277583.jpg",
+    description: "Giảm giá 50% cho tất cả vé phim trong tháng 6",
+    date: "01/06/2024 - 30/06/2024",
+    details: [
+      "Áp dụng cho tất cả các suất chiếu",
+      "Không áp dụng cho phim 3D và 4DX",
+      "Không áp dụng cho combo bắp nước",
+      "Không áp dụng cho các ngày lễ đặc biệt",
+    ],
+    terms: "Chương trình có thể kết thúc sớm hơn dự kiến khi hết ngân sách",
+  },
+  {
+    id: 2,
+    title: "Combo gia đình",
+    image: "https://www.galaxycine.vn/media/2025/5/26/1135_1748246277583.jpg",
+    description: "Mua 3 vé tặng 1 vé và 1 combo bắp nước",
+    date: "01/05/2024 - 31/05/2024",
+    details: [
+      "Áp dụng cho nhóm từ 4 người trở lên",
+      "Combo bắp nước bao gồm: 1 bắp lớn và 2 nước",
+      "Không áp dụng cho các ngày cuối tuần",
+      "Không áp dụng cho phim 3D và 4DX",
+    ],
+    terms: "Chương trình có thể kết thúc sớm hơn dự kiến khi hết ngân sách",
+  },
+  {
+    id: 3,
+    title: "Sinh nhật rạp chiếu",
+    image: "https://www.galaxycine.vn/media/2025/5/26/1135_1748246277583.jpg",
+    description: "Giảm 30% cho khách hàng trong tháng sinh nhật",
+    date: "01/01/2024 - 31/12/2024",
+    details: [
+      "Áp dụng cho khách hàng có thẻ thành viên",
+      "Giảm giá áp dụng cho tất cả các suất chiếu",
+      "Cần xuất trình CMND/CCCD để xác minh",
+      "Không áp dụng cho phim 3D và 4DX",
+    ],
+    terms: "Chương trình áp dụng quanh năm",
+  },
+  {
+    id: 4,
+    title: "Ngày lễ đặc biệt",
+    image: "https://www.galaxycine.vn/media/2025/5/26/1135_1748246277583.jpg",
+    description: "Giảm giá 40% cho tất cả vé phim vào ngày lễ",
+    date: "01/04/2024 - 30/04/2024",
+    details: [
+      "Áp dụng cho tất cả các suất chiếu",
+      "Không áp dụng cho phim 3D và 4DX",
+      "Không áp dụng cho combo bắp nước",
+      "Áp dụng cho tất cả khách hàng",
+    ],
+    terms: "Chương trình có thể kết thúc sớm hơn dự kiến khi hết ngân sách",
+  },
+];

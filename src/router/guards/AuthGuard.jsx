@@ -3,10 +3,10 @@ import { ROUTES } from "../constants";
 import { useAuth } from "../../hooks/useAuth";
 
 export const AuthGuard = ({ children }) => {
-  const { user } = useAuth();
+  const token = localStorage.getItem("token");
   const location = useLocation();
 
-  if (!user) {
+  if (!token) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 

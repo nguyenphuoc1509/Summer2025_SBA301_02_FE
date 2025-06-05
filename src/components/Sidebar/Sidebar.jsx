@@ -15,22 +15,30 @@ const Sidebar = () => {
 
   const menuItems = [
     { title: "Tổng quan", icon: RiDashboardLine, path: "/admin" },
-    { title: "Quản lí người dùng", icon: FiUsers, path: "/admin/users" },
+    {
+      title: "Quản lý người dùng",
+      icon: FiUsers,
+      path: "/admin/quan-ly-nguoi-dung",
+    },
     {
       title: "Quản lí phim",
       icon: SiTicktick,
-      path: "/admin/verify-users",
+      path: "/admin/quan-ly-phim",
     },
-    { title: "Quản lí rạp", icon: MdOutlineCampaign, path: "/admin/cinemas" },
     {
-      title: "Quản lí lịch chiếu",
+      title: "Quản lý rạp",
+      icon: MdOutlineCampaign,
+      path: "/admin/quan-ly-rap",
+    },
+    {
+      title: "Quản lý lịch chiếu",
       icon: MdEventAvailable,
-      path: "/admin/schedules",
+      path: "/admin/quan-ly-lich-chieu",
     },
     {
-      title: "Quản lí blog",
+      title: "Quản lý blog",
       icon: MdProductionQuantityLimits,
-      path: "/admin/blogs",
+      path: "/admin/quan-ly-blog",
     },
     // { title: "Analytics", icon: IoStatsChartOutline, path: "/admin/analytics" },
     // { title: "Settings", icon: FiSettings, path: "/admin/settings" },

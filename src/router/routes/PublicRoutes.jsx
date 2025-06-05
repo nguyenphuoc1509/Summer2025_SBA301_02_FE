@@ -12,6 +12,9 @@ import MovieReview from "../../pages/Customer/Cinema/MovieReview";
 import MovieBlog from "../../pages/Customer/Cinema/MovieBlog";
 import LoginAdmin from "../../pages/Admin/Login/LoginAdmin";
 import { AuthLayout } from "../layouts/AuthLayout";
+import Ticket from "../../pages/Customer/Ticket/Ticket";
+import Event from "../../pages/Customer/Event/Event";
+import EventDetail from "../../pages/Customer/Event/EventDetail";
 
 export const PublicRoutes = [
   {
@@ -63,5 +66,20 @@ export const PublicRoutes = [
     path: ROUTES.LOGIN_ADMIN,
     element: <LoginAdmin />,
     layout: AuthLayout,
+  },
+  {
+    path: ROUTES.TICKET,
+    element: <Ticket />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.EVENT,
+    element: <Event />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.EVENT_DETAIL,
+    element: <EventDetail />,
+    layout: MainLayout,
   },
 ];

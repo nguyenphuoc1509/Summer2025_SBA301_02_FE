@@ -9,12 +9,19 @@ export const ROUTES = {
   MOVIE_DIRECTOR: "/dao-dien",
   MOVIE_REVIEW: "/binh-luan-phim",
   MOVIE_BLOG: "/blog-dien-anh",
+  TICKET: "/mua-ve",
+  EVENT: "/uu-dai",
+  EVENT_DETAIL: "/uu-dai/:slug",
 
   // Private routes
   PROFILE: "/thong-tin-ca-nhan",
 
   // Admin routes
   DASHBOARD: "/thong-ke",
-  USER_MANAGEMENT: "/quan-ly-nguoi-dung",
+  USER_MANAGEMENT: "/admin/quan-ly-nguoi-dung",
+  MOVIE_MANAGEMENT: "/admin/quan-ly-phim",
+  CINEMA_MANAGEMENT: "/admin/quan-ly-rap",
+  SCHEDULE_MANAGEMENT: "/admin/quan-ly-lich-chieu",
+  BLOG_MANAGEMENT: "/admin/quan-ly-blog",
   LOGIN_ADMIN: "/admin",
 };
