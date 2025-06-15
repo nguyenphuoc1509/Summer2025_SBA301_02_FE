@@ -15,6 +15,7 @@ export const ROUTES = {
 
   // Private routes
   PROFILE: "/thong-tin-ca-nhan",
+  TICKET_INFO: "/thong-tin-ve",
 
   // Admin routes
   DASHBOARD: "/thong-ke",
@@ -23,5 +24,8 @@ export const ROUTES = {
   CINEMA_MANAGEMENT: "/admin/quan-ly-rap",
   SCHEDULE_MANAGEMENT: "/admin/quan-ly-lich-chieu",
   BLOG_MANAGEMENT: "/admin/quan-ly-blog",
+  GENRE_MANAGEMENT: "/admin/quan-ly-loai-phim",
+  PERSON_MANAGEMENT: "/admin/quan-ly-dao-dien-dien-vien",
+  COUNTRY_MANAGEMENT: "/admin/quan-ly-quoc-gia",
   LOGIN_ADMIN: "/admin",
 };

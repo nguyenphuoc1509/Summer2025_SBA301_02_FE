@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -9,46 +9,71 @@ import {
   message,
   Popconfirm,
   Tag,
+  Select,
 } from "antd";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
-
-// Mock data
-const mockMovies = [
-  {
-    id: 1,
-    title: "Avengers: Hồi Kết",
-    director: "Anthony Russo",
-    releaseDate: "2019-04-26",
-    duration: "181",
-    genre: "Hành Động",
-    status: "active",
-  },
-  {
-    id: 2,
-    title: "Kỵ Sĩ Bóng Đêm",
-    director: "Christopher Nolan",
-    releaseDate: "2008-07-18",
-    duration: "152",
-    genre: "Hành Động",
-    status: "active",
-  },
-  {
-    id: 3,
-    title: "Khởi Đầu",
-    director: "Christopher Nolan",
-    releaseDate: "2010-07-16",
-    duration: "148",
-    genre: "Khoa Học Viễn Tưởng",
-    status: "inactive",
-  },
-];
+import { movieService } from "../../../services/movieManagement/movieService"; // Import the movieService
+import { countryService } from "../../../services/countryManagement/countryService";
+import { personService } from "../../../services/personManagement/personService";
+import { genreService } from "../../../services/genreManagement/genreService";
 
 const MovieManagement = () => {
-  const [movies, setMovies] = useState(mockMovies);
+  const [movies, setMovies] = useState([]); // Initialize with empty array
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingMovie, setEditingMovie] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false); // Add loading state
+  const [countries, setCountries] = useState([]);
+  const [persons, setPersons] = useState([]);
+  const [genres, setGenres] = useState([]);
+
+  useEffect(() => {
+    fetchMovies();
+    fetchCountries();
+    fetchPersons();
+    fetchGenres();
+  }, []);
+
+  const fetchMovies = async () => {
+    setLoading(true);
+    try {
+      const response = await movieService.getAllMovies();
+      setMovies(response.result.content);
+    } catch (error) {
+      message.error("Failed to fetch movies.");
+      console.error("Error fetching movies:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const res = await countryService.getAllCountries();
+      setCountries(res.result.content);
+    } catch (error) {
+      message.error("Failed to fetch countries.");
+    }
+  };
+
+  const fetchPersons = async () => {
+    try {
+      const res = await personService.getAllPersons();
+      setPersons(res.result.content);
+    } catch (error) {
+      message.error("Failed to fetch persons.");
+    }
+  };
+
+  const fetchGenres = async () => {
+    try {
+      const res = await genreService.getAllGenres();
+      setGenres(res.result.content);
+    } catch (error) {
+      message.error("Failed to fetch genres.");
+    }
+  };
 
   const columns = [
     {
@@ -65,8 +90,15 @@ const MovieManagement = () => {
     },
     {
       title: "Director",
-      dataIndex: "director",
-      key: "director",
+      dataIndex: "directors",
+      key: "directors",
+      render: (directors) =>
+        Array.isArray(directors) ? directors.join(", ") : "",
+    },
+    {
+      title: "Country",
+      dataIndex: "country",
+      key: "country",
     },
     {
       title: "Release Date",
@@ -82,17 +114,27 @@ const MovieManagement = () => {
     },
     {
       title: "Genre",
-      dataIndex: "genre",
-      key: "genre",
-      render: (genre) => <Tag color="blue">{genre}</Tag>,
+      dataIndex: "genres",
+      key: "genres",
+      render: (genres) =>
+        Array.isArray(genres)
+          ? genres.map((genre) => <Tag color="blue" key={genre}>{genre}</Tag>)
+          : null,
+    },
+    {
+      title: "Actors",
+      dataIndex: "actors",
+      key: "actors",
+      render: (actors) =>
+        Array.isArray(actors) ? actors.join(", ") : "",
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "movieStatus",
+      key: "movieStatus",
       render: (status) => (
-        <Tag color={status === "active" ? "green" : "red"}>
-          {status.toUpperCase()}
+        <Tag color={status === "RELEASED" ? "green" : "red"}>
+          {(status || "UNKNOWN").toUpperCase()}
         </Tag>
       ),
     },
@@ -125,36 +167,62 @@ const MovieManagement = () => {
 
   const handleEdit = (movie) => {
     setEditingMovie(movie);
-    form.setFieldsValue(movie);
+
+    const genreIds = genres.filter(g => movie.genres.includes(g.name)).map(g => g.id);
+    const directorIds = persons.filter(p => p.occupation === "DIRECTOR" && movie.directors.includes(p.name)).map(p => p.id);
+    const actorIds = persons.filter(p => p.occupation === "ACTOR" && movie.actors.includes(p.name)).map(p => p.id);
+    const countryId = countries.find(c => c.name === movie.country)?.id;
+
+    form.setFieldsValue({
+      ...movie,
+      genreIds,
+      directorIds,
+      actorIds,
+      countryId,
+    });
     setIsModalVisible(true);
   };
 
-  const handleDelete = (id) => {
-    setMovies(movies.filter((movie) => movie.id !== id));
-    message.success("Xóa phim thành công");
+  const handleDelete = async (id) => {
+    try {
+      await movieService.deleteMovie(id);
+      message.success("Xóa phim thành công");
+      fetchMovies(); // Re-fetch movies after deletion
+    } catch (error) {
+      message.error("Failed to delete movie.");
+      console.error("Error deleting movie:", error);
+    }
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      // Build schema
+      const data = {
+        title: values.title,
+        description: values.description,
+        duration: Number(values.duration),
+        releaseDate: values.releaseDate,
+        trailerUrl: values.trailerUrl,
+        movieStatus: values.movieStatus,
+        countryId: values.countryId,
+        genreIds: values.genreIds,
+        directorIds: values.directorIds,
+        actorIds: values.actorIds,
+      };
       if (editingMovie) {
-        // Update existing movie
-        setMovies(
-          movies.map((movie) =>
-            movie.id === editingMovie.id ? { ...movie, ...values } : movie
-          )
-        );
+        await movieService.updateMovie(editingMovie.id, data);
         message.success("Cập nhật phim thành công");
       } else {
-        // Add new movie
-        const newMovie = {
-          ...values,
-          id: Math.max(...movies.map((m) => m.id)) + 1,
-        };
-        setMovies([...movies, newMovie]);
+        await movieService.createMovie(data);
         message.success("Thêm phim thành công");
       }
       setIsModalVisible(false);
-    });
+      fetchMovies();
+    } catch (error) {
+      message.error("Failed to save movie.");
+      console.error("Error saving movie:", error);
+    }
   };
 
   const filteredMovies = movies.filter((movie) =>
@@ -181,12 +249,27 @@ const MovieManagement = () => {
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredMovies}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-      />
+      {loading ? (
+        <p>Loading movies...</p>
+      ) : filteredMovies.length === 0 ? (
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "50px",
+            fontSize: "18px",
+            color: "#888",
+          }}
+        >
+          Chưa có phim nào
+        </p>
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredMovies}
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+        />
+      )}
 
       <Modal
         title={editingMovie ? "Sửa Phim" : "Thêm Phim"}
@@ -203,20 +286,11 @@ const MovieManagement = () => {
             <Input />
           </Form.Item>
           <Form.Item
-            name="director"
-            label="Đạo Diễn"
-            rules={[{ required: true, message: "Vui lòng nhập tên đạo diễn" }]}
+            name="description"
+            label="Mô tả"
+            rules={[{ required: true, message: "Vui lòng nhập mô tả" }]}
           >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="releaseDate"
-            label="Ngày Phát Hành"
-            rules={[
-              { required: true, message: "Vui lòng chọn ngày phát hành" },
-            ]}
-          >
-            <Input type="date" />
+            <Input.TextArea />
           </Form.Item>
           <Form.Item
             name="duration"
@@ -226,18 +300,102 @@ const MovieManagement = () => {
             <Input type="number" />
           </Form.Item>
           <Form.Item
-            name="genre"
-            label="Thể Loại"
-            rules={[{ required: true, message: "Vui lòng nhập thể loại" }]}
+            name="releaseDate"
+            label="Ngày Phát Hành"
+            rules={[{ required: true, message: "Vui lòng chọn ngày phát hành" }]}
+          >
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item
+            name="trailerUrl"
+            label="Trailer URL"
+            rules={[{ required: true, message: "Vui lòng nhập trailer URL" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            name="status"
+            name="movieStatus"
             label="Trạng Thái"
             rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
           >
-            <Input />
+            <Select>
+              <Select.Option value="UPCOMING">UPCOMING</Select.Option>
+              <Select.Option value="RELEASED">RELEASED</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="countryId"
+            label="Quốc Gia"
+            rules={[{ required: true, message: "Vui lòng chọn quốc gia" }]}
+          >
+            <Select
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >
+              {countries.map((country) => (
+                <Select.Option key={country.id} value={country.id}>
+                  {country.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="genreIds"
+            label="Thể Loại"
+            rules={[{ required: true, message: "Vui lòng chọn thể loại" }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Chọn thể loại"
+              optionFilterProp="children"
+            >
+              {genres.map((genre) => (
+                <Select.Option key={genre.id} value={genre.id}>
+                  {genre.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="directorIds"
+            label="Đạo Diễn"
+            rules={[{ required: true, message: "Vui lòng chọn đạo diễn" }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Chọn đạo diễn"
+              optionFilterProp="children"
+            >
+              {persons
+                .filter((p) => p.occupation === "DIRECTOR")
+                .map((person) => (
+                  <Select.Option key={person.id} value={person.id}>
+                    {person.name}
+                  </Select.Option>
+                ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="actorIds"
+            label="Diễn Viên"
+            rules={[{ required: true, message: "Vui lòng chọn diễn viên" }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Chọn diễn viên"
+              optionFilterProp="children"
+            >
+              {persons
+                .filter((p) => p.occupation === "ACTOR")
+                .map((person) => (
+                  <Select.Option key={person.id} value={person.id}>
+                    {person.name}
+                  </Select.Option>
+                ))}
+            </Select>
           </Form.Item>
         </Form>
       </Modal>

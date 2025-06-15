@@ -1,35 +1,26 @@
 import React from "react";
-import { Card, Typography, Button, Space, Divider, Row, Col } from "antd";
+import { Card, Typography, Button, Space, Divider, Row, Col, Spin } from "antd";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
   CalendarOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
-const Confirm = () => {
-  // Mock data - replace with actual data from your state/API
-  const bookingDetails = {
-    movieName: "Avengers: Endgame",
-    theater: "CGV Aeon Mall",
-    date: "2024-03-20",
-    time: "19:30",
-    seats: ["A1", "A2", "A3"],
-    totalAmount: 450000,
-  };
-
+const Confirm = ({ bookingDetails, onConfirm, loading }) => {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <Card className="shadow-lg">
         <div className="text-center mb-6">
           <CheckCircleOutlined style={{ fontSize: 48, color: "#52c41a" }} />
           <Title level={3} className="mt-4">
-            Booking Confirmed!
+            Xác nhận đặt vé
           </Title>
           <Text type="secondary">
-            Your booking has been successfully confirmed
+            Vui lòng kiểm tra thông tin đặt vé của bạn
           </Text>
         </div>
 
@@ -57,12 +48,19 @@ const Confirm = () => {
                   <ClockCircleOutlined />
                   <Text>{bookingDetails.time}</Text>
                 </Space>
+
+                <Space>
+                  <CreditCardOutlined />
+                  <Text>
+                    Phương thức thanh toán: {bookingDetails.paymentMethod}
+                  </Text>
+                </Space>
               </Space>
             </Col>
 
             <Col span={24}>
               <div className="bg-gray-50 p-4 rounded">
-                <Text strong>Selected Seats:</Text>
+                <Text strong>Ghế đã chọn:</Text>
                 <div className="mt-2">
                   {bookingDetails.seats.map((seat) => (
                     <span
@@ -78,7 +76,7 @@ const Confirm = () => {
 
             <Col span={24}>
               <div className="text-right">
-                <Text strong>Total Amount: </Text>
+                <Text strong>Tổng tiền: </Text>
                 <Text strong className="text-lg">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
@@ -93,11 +91,17 @@ const Confirm = () => {
         <Divider />
 
         <div className="text-center space-y-4">
-          <Button type="primary" size="large" block>
-            Download Ticket
+          <Button
+            type="primary"
+            size="large"
+            block
+            onClick={onConfirm}
+            loading={loading}
+          >
+            Xác nhận đặt vé
           </Button>
-          <Button size="large" block>
-            Back to Home
+          <Button size="large" block disabled={loading}>
+            Quay về trang chủ
           </Button>
         </div>
       </Card>

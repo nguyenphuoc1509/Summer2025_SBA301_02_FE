@@ -64,14 +64,11 @@ const LoginPopup = ({ onClose }) => {
     setIsLoading(true);
     try {
       const response = await authService.login(email, password);
-      if (response.code === 200) {
+      if (response.code === 0) {
         const userData = {
-          accessToken: response.result.accessToken,
-          refreshToken: response.result.refreshToken,
-          userId: response.result.userId,
+          token: response.result.token,
         };
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", userData.accessToken);
+        localStorage.setItem("token", userData.token);
         login(userData);
         handleClose();
         window.location.reload();

@@ -8,93 +8,86 @@ import {
 
 const { Title, Text } = Typography;
 
-const Payment = () => {
-  const [paymentMethod, setPaymentMethod] = useState("credit");
+const Payment = ({ onNext }) => {
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
   const onFinish = (values) => {
     console.log("Payment values:", values);
+    onNext({ paymentMethod });
   };
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <Card className="shadow-lg">
         <Title level={3} className="text-center mb-6">
-          Payment Details
+          Thông tin thanh toán
         </Title>
 
         <Form layout="vertical" onFinish={onFinish} className="space-y-4">
-          <Form.Item label="Payment Method">
+          <Form.Item label="Phương thức thanh toán">
             <Radio.Group
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full"
             >
               <Space direction="vertical" className="w-full">
-                <Radio value="credit" className="w-full">
+                <Radio value="ONLINE" className="w-full">
                   <Space>
                     <CreditCardOutlined />
-                    <Text>Credit Card</Text>
+                    <Text>Thanh toán online</Text>
                   </Space>
                 </Radio>
-                <Radio value="bank" className="w-full">
+                <Radio value="BANK" className="w-full" disabled>
                   <Space>
                     <BankOutlined />
-                    <Text>Bank Transfer</Text>
+                    <Text>Chuyển khoản ngân hàng (Không khả dụng)</Text>
                   </Space>
                 </Radio>
-                <Radio value="wallet" className="w-full">
+                <Radio value="WALLET" className="w-full" disabled>
                   <Space>
                     <WalletOutlined />
-                    <Text>Digital Wallet</Text>
+                    <Text>Ví điện tử (Không khả dụng)</Text>
                   </Space>
                 </Radio>
               </Space>
             </Radio.Group>
           </Form.Item>
 
-          {paymentMethod === "credit" && (
-            <>
-              <Form.Item
-                label="Card Number"
-                name="cardNumber"
-                rules={[
-                  { required: true, message: "Please input your card number!" },
-                ]}
-              >
-                <Input placeholder="1234 5678 9012 3456" maxLength={19} />
-              </Form.Item>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Form.Item
-                  label="Expiry Date"
-                  name="expiryDate"
-                  rules={[
-                    { required: true, message: "Please input expiry date!" },
-                  ]}
-                >
-                  <Input placeholder="MM/YY" maxLength={5} />
-                </Form.Item>
-
-                <Form.Item
-                  label="CVV"
-                  name="cvv"
-                  rules={[{ required: true, message: "Please input CVV!" }]}
-                >
-                  <Input placeholder="123" maxLength={3} />
-                </Form.Item>
-              </div>
-            </>
-          )}
+          <Form.Item
+            label="Tên chủ thẻ"
+            name="cardholderName"
+            rules={[{ required: true, message: "Vui lòng nhập tên chủ thẻ!" }]}
+          >
+            <Input placeholder="Nguyễn Văn A" />
+          </Form.Item>
 
           <Form.Item
-            label="Cardholder Name"
-            name="cardholderName"
-            rules={[
-              { required: true, message: "Please input cardholder name!" },
-            ]}
+            label="Số thẻ"
+            name="cardNumber"
+            rules={[{ required: true, message: "Vui lòng nhập số thẻ!" }]}
           >
-            <Input placeholder="John Doe" />
+            <Input placeholder="1234 5678 9012 3456" maxLength={19} />
           </Form.Item>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              label="Ngày hết hạn"
+              name="expiryDate"
+              rules={[
+                { required: true, message: "Vui lòng nhập ngày hết hạn!" },
+              ]}
+            >
+              <Input placeholder="MM/YY" maxLength={5} />
+            </Form.Item>
+
+            <Form.Item
+              label="CVV"
+              name="cvv"
+              rules={[{ required: true, message: "Vui lòng nhập CVV!" }]}
+            >
+              <Input placeholder="123" maxLength={3} />
+            </Form.Item>
+          </div>
 
           <Form.Item className="text-center">
             <Button
@@ -103,7 +96,7 @@ const Payment = () => {
               size="large"
               className="w-full"
             >
-              Pay Now
+              Thanh toán ngay
             </Button>
           </Form.Item>
         </Form>

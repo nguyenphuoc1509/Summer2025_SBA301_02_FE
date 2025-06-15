@@ -7,6 +7,9 @@ import MovieManagement from "../../pages/Admin/MovieManagement/MovieManagement";
 import CinemeManagement from "../../pages/Admin/CinemaManagement/CinemeManagement";
 import ScheduleManagement from "../../pages/Admin/ScheduleManagement/ScheduleManagement";
 import BlogManagement from "../../pages/Admin/BlogManagement/BlogManagement";
+import GenreManagement from "../../pages/Admin/GenreManagement/GenreManagement";
+import PersonManagement from "../../pages/Admin/PersonManagement/PersonManagement";
+import CountryManagement from "../../pages/Admin/CountryManagement/CountryManagement";
 
 export const AdminRoutes = [
   {
@@ -37,6 +40,21 @@ export const AdminRoutes = [
   {
     path: ROUTES.BLOG_MANAGEMENT,
     element: <BlogManagement />,
+    layout: AdminLayout,
+  },
+  {
+    path: ROUTES.GENRE_MANAGEMENT,
+    element: <GenreManagement />,
+    layout: AdminLayout,
+  },
+  {
+    path: ROUTES.PERSON_MANAGEMENT,
+    element: <PersonManagement />,
+    layout: AdminLayout,
+  },
+  {
+    path: ROUTES.COUNTRY_MANAGEMENT,
+    element: <CountryManagement />,
     layout: AdminLayout,
   },
 ];

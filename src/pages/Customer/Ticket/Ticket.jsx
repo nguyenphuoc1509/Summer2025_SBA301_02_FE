@@ -4,6 +4,7 @@ import DropdownSection from "../../../components/DropdownSection";
 import ChooseSeat from "./ChooseSeat";
 import Payment from "./Payment";
 import Confirm from "./Confirm";
+import ticketService from "../../../services/ticket";
 
 const LOCATIONS = [
   "TP Hồ Chí Minh",
@@ -20,9 +21,9 @@ const LOCATIONS = [
   "Thừa Thiên Huế",
 ];
 const MOVIES = [
-  { id: 1, name: "Avengers: Endgame" },
-  { id: 2, name: "Spider-Man: No Way Home" },
-  { id: 3, name: "Minions: The Rise of Gru" },
+  { id: 1, name: "Avengers: Endgame", price: 500000 },
+  { id: 2, name: "Spider-Man: No Way Home", price: 600000 },
+  { id: 3, name: "Minions: The Rise of Gru", price: 700000 },
 ];
 const SHOWTIMES = ["10:00", "13:00", "16:00", "19:00", "21:30"];
 
@@ -36,34 +37,68 @@ const Ticket = () => {
   const [selected, setSelected] = useState({
     location: "",
     movie: null,
+    movieName: "",
     showtime: "",
     seats: [],
+    paymentMethod: "ONLINE",
+    userId: "user123",
   });
+  const [loading, setLoading] = useState(false);
 
-  // Xử lý chọn
   const handleSelect = (type, value) => {
     setSelected((prev) => ({
       ...prev,
       [type]: value,
       ...(type === "location" ? { movie: null, showtime: "" } : {}),
       ...(type === "movie" ? { showtime: "" } : {}),
+      ...(type === "movie"
+        ? { movieName: MOVIES.find((m) => m.id === value)?.name || "" }
+        : {}),
     }));
-    // Mở dropdown tiếp theo
     if (type === "location")
       setOpenDropdown({ location: false, movie: true, showtime: false });
     if (type === "movie")
       setOpenDropdown({ location: false, movie: false, showtime: true });
   };
 
-  // Xử lý tiếp tục
   const handleNext = (data) => {
     if (currentStep === 1 && data && data.selectedSeats) {
       setSelected((prev) => ({ ...prev, seats: data.selectedSeats }));
+    }
+    if (currentStep === 2 && data && data.paymentMethod) {
+      setSelected((prev) => ({ ...prev, paymentMethod: data.paymentMethod }));
     }
     setCurrentStep((s) => Math.min(s + 1, 3));
   };
   const handleBack = () => {
     setCurrentStep((s) => Math.max(s - 1, 0));
+  };
+
+  const handleCreateTicket = async () => {
+    setLoading(true);
+    try {
+      const movieObj = MOVIES.find((m) => m.id === selected.movie);
+      const ticketData = {
+        location: selected.location,
+        movieId: selected.movie,
+        movieName: movieObj?.name,
+        showTime: new Date().toISOString().split("T")[0], // Giả lập ngày hôm nay
+        moviePrice: movieObj?.price / 100000, // Chuyển đổi từ VND sang đơn vị khác
+        hourTime: parseInt(selected.showtime.split(":")[0]),
+        seats: selected.seats,
+        paymentMethod: selected.paymentMethod,
+        userId: selected.userId,
+      };
+
+      await ticketService.createTicket(ticketData);
+      // Hiển thị thông báo thành công hoặc chuyển trang nếu cần
+      alert("Đặt vé thành công!");
+    } catch (error) {
+      console.error("Lỗi khi đặt vé:", error);
+      alert("Có lỗi xảy ra khi đặt vé. Vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Thông tin tổng kết
@@ -193,7 +228,9 @@ const Ticket = () => {
             <hr className="my-4" />
             <div className="flex justify-between items-center mt-6">
               <span className="font-semibold text-lg">Tổng cộng</span>
-              <span className="text-orange-500 font-bold text-2xl">0 đ</span>
+              <span className="text-orange-500 font-bold text-2xl">
+                {movieObj ? movieObj.price : 0}đ
+              </span>
             </div>
           </div>
           <div className="flex justify-between mt-8">
@@ -229,7 +266,7 @@ const Ticket = () => {
     mainContent = (
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
-          <Payment />
+          <Payment onNext={handleNext} onBack={handleBack} />
           <div className="flex justify-between mt-8">
             <button
               className="text-orange-400 font-semibold text-lg hover:underline"
@@ -239,7 +276,7 @@ const Ticket = () => {
             </button>
             <button
               className="bg-orange-400 text-white px-10 py-3 rounded-lg font-semibold text-lg hover:bg-orange-500 transition-colors"
-              onClick={handleNext}
+              onClick={() => handleNext({ paymentMethod: "ONLINE" })}
             >
               Tiếp tục
             </button>
@@ -251,7 +288,19 @@ const Ticket = () => {
     mainContent = (
       <div className="flex justify-center">
         <div className="w-full max-w-4xl">
-          <Confirm />
+          <Confirm
+            bookingDetails={{
+              movieName: movieObj?.name,
+              theater: selected.location,
+              date: new Date().toLocaleDateString(),
+              time: selected.showtime,
+              seats: selected.seats,
+              totalAmount: movieObj?.price || 0,
+              paymentMethod: selected.paymentMethod,
+            }}
+            onConfirm={handleCreateTicket}
+            loading={loading}
+          />
           <div className="flex justify-between mt-8">
             <button
               className="text-orange-400 font-semibold text-lg hover:underline"

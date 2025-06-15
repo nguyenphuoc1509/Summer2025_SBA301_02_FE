@@ -6,6 +6,8 @@ import {
   MdOutlineCampaign,
   MdEventAvailable,
   MdProductionQuantityLimits,
+  MdPerson,
+  MdLanguage,
 } from "react-icons/md";
 import { AiOutlineProduct } from "react-icons/ai";
 import { SiTicktick } from "react-icons/si";
@@ -34,6 +36,21 @@ const Sidebar = () => {
       title: "Quản lý lịch chiếu",
       icon: MdEventAvailable,
       path: "/admin/quan-ly-lich-chieu",
+    },
+    {
+      title: "Quản lý loại phim",
+      icon: AiOutlineProduct,
+      path: "/admin/quan-ly-loai-phim",
+    },
+    {
+      title: "Quản lý đạo diễn, diễn viên",
+      icon: MdPerson,
+      path: "/admin/quan-ly-dao-dien-dien-vien",
+    },
+    {
+      title: "Quản lý quốc gia",
+      icon: MdLanguage,
+      path: "/admin/quan-ly-quoc-gia",
     },
     {
       title: "Quản lý blog",
