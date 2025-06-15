@@ -1,10 +1,10 @@
 import { instance } from "../instance";
 
 export const authService = {
-  login: async (email, password) => {
+  login: async (identifier, password) => {
     try {
       const response = await instance.post("/auth/login", {
-        email,
+        identifier,
         password,
       });
       return response;

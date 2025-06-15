@@ -8,14 +8,14 @@ const illustration = "https://cdn-icons-png.flaticon.com/512/616/616408.png"; //
 // Mock data cho tài khoản
 const mockUsers = [
   {
-    email: "user@gmail.com",
+    username: "user",
     password: "user@gmail.com",
     role: "user",
     name: "Người dùng thường",
     token: "user_token_123456",
   },
   {
-    email: "member@example.com",
+    username: "member",
     password: "123456",
     role: "member_user",
     name: "Thành viên G STAR",
@@ -27,12 +27,12 @@ const LoginPopup = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
 
   // State cho login
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   // State cho register
   const [fullName, setFullName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
+  const [regUsername, setRegUsername] = useState("");
   const [gender, setGender] = useState("MALE");
   const [birthDate, setBirthDate] = useState("");
   const [regPassword, setRegPassword] = useState("");
@@ -63,10 +63,10 @@ const LoginPopup = ({ onClose }) => {
     setError("");
     setIsLoading(true);
     try {
-      const response = await authService.login(email, password);
-      if (response.code === 0) {
+      const response = await authService.login(username, password);
+      if (response.code === 200) {
         const userData = {
-          token: response.result.token,
+          token: response.result.accessToken,
         };
         localStorage.setItem("token", userData.token);
         login(userData);
@@ -93,7 +93,7 @@ const LoginPopup = ({ onClose }) => {
     try {
       await authService.register({
         fullName,
-        email: regEmail,
+        username: regUsername,
         gender,
         birthDate,
         password: regPassword,
@@ -143,13 +143,15 @@ const LoginPopup = ({ onClose }) => {
             </h2>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-gray-700 mb-1">Email</label>
+                <label className="block text-gray-700 mb-1">
+                  Tên đăng nhập
+                </label>
                 <input
-                  type="email"
+                  type="text"
                   className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-orange-400"
-                  placeholder="Nhập Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Nhập tên đăng nhập"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
@@ -218,13 +220,15 @@ const LoginPopup = ({ onClose }) => {
                 />
               </div>
               <div>
-                <label className="block text-gray-700 mb-1">Email</label>
+                <label className="block text-gray-700 mb-1">
+                  Tên đăng nhập
+                </label>
                 <input
-                  type="email"
+                  type="text"
                   className="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-orange-400"
-                  placeholder="Nhập Email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
+                  placeholder="Nhập tên đăng nhập"
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
                   required
                 />
               </div>

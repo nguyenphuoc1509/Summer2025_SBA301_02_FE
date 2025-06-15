@@ -44,12 +44,10 @@ const Header = () => {
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
-      const userData = localStorage.getItem("user");
 
-      if (token && userData) {
-        const user = JSON.parse(userData);
+      if (token) {
         setIsLoggedIn(true);
-        setIsMemberUser(user.role === "member_user");
+        setIsMemberUser(true);
       } else {
         setIsLoggedIn(false);
         setIsMemberUser(false);
