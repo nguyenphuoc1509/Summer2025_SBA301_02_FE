@@ -16,7 +16,7 @@ const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { title: "Tổng quan", icon: RiDashboardLine, path: "/admin" },
+    { title: "Tổng quan", icon: RiDashboardLine, path: "/thong-ke" },
     {
       title: "Quản lý người dùng",
       icon: FiUsers,

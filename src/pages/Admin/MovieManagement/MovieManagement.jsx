@@ -10,23 +10,31 @@ import {
   Popconfirm,
   Tag,
   Select,
+  Upload,
 } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
-import { movieService } from "../../../services/movieManagement/movieService"; // Import the movieService
+import {
+  PlusOutlined,
+  SearchOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import { movieService } from "../../../services/movieManagement/movieService";
 import { countryService } from "../../../services/countryManagement/countryService";
 import { personService } from "../../../services/personManagement/personService";
 import { genreService } from "../../../services/genreManagement/genreService";
 
 const MovieManagement = () => {
-  const [movies, setMovies] = useState([]); // Initialize with empty array
+  const [movies, setMovies] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingMovie, setEditingMovie] = useState(null);
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState([]);
   const [persons, setPersons] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchMovies();
@@ -39,7 +47,14 @@ const MovieManagement = () => {
     setLoading(true);
     try {
       const response = await movieService.getAllMovies();
-      setMovies(response.result.content);
+      const processedMovies = response.result.content.map((movie) => ({
+        ...movie,
+        country: movie.country?.name || "",
+        genres: movie.genres?.map((genre) => genre.name) || [],
+        directors: movie.directors?.map((director) => director.name) || [],
+        actors: movie.actors?.map((actor) => actor.name) || [],
+      }));
+      setMovies(processedMovies);
     } catch (error) {
       message.error("Failed to fetch movies.");
       console.error("Error fetching movies:", error);
@@ -89,6 +104,17 @@ const MovieManagement = () => {
       sorter: (a, b) => a.title.localeCompare(b.title),
     },
     {
+      title: "Thumbnail",
+      dataIndex: "thumbnailUrl",
+      key: "thumbnailUrl",
+      render: (thumbnailUrl) =>
+        thumbnailUrl ? (
+          <img src={thumbnailUrl} alt="Movie thumbnail" style={{ width: 50 }} />
+        ) : (
+          "No image"
+        ),
+    },
+    {
       title: "Director",
       dataIndex: "directors",
       key: "directors",
@@ -118,15 +144,18 @@ const MovieManagement = () => {
       key: "genres",
       render: (genres) =>
         Array.isArray(genres)
-          ? genres.map((genre) => <Tag color="blue" key={genre}>{genre}</Tag>)
+          ? genres.map((genre) => (
+              <Tag color="blue" key={genre}>
+                {genre}
+              </Tag>
+            ))
           : null,
     },
     {
       title: "Actors",
       dataIndex: "actors",
       key: "actors",
-      render: (actors) =>
-        Array.isArray(actors) ? actors.join(", ") : "",
+      render: (actors) => (Array.isArray(actors) ? actors.join(", ") : ""),
     },
     {
       title: "Status",
@@ -162,16 +191,33 @@ const MovieManagement = () => {
   const handleAdd = () => {
     setEditingMovie(null);
     form.resetFields();
+    setThumbnailUrl("");
+    setThumbnailFile(null);
     setIsModalVisible(true);
   };
 
   const handleEdit = (movie) => {
-    setEditingMovie(movie);
+    if (!movie) return;
 
-    const genreIds = genres.filter(g => movie.genres.includes(g.name)).map(g => g.id);
-    const directorIds = persons.filter(p => p.occupation === "DIRECTOR" && movie.directors.includes(p.name)).map(p => p.id);
-    const actorIds = persons.filter(p => p.occupation === "ACTOR" && movie.actors.includes(p.name)).map(p => p.id);
-    const countryId = countries.find(c => c.name === movie.country)?.id;
+    setEditingMovie(movie);
+    setThumbnailUrl(movie.thumbnailUrl || "");
+
+    const genreIds = Array.isArray(movie.genres)
+      ? movie.genres.map((g) => (typeof g === "object" ? g.id : g))
+      : [];
+
+    const directorIds = Array.isArray(movie.directors)
+      ? movie.directors.map((d) => (typeof d === "object" ? d.id : d))
+      : [];
+
+    const actorIds = Array.isArray(movie.actors)
+      ? movie.actors.map((a) => (typeof a === "object" ? a.id : a))
+      : [];
+
+    const countryId =
+      movie.country && typeof movie.country === "object"
+        ? movie.country.id
+        : movie.countryId;
 
     form.setFieldsValue({
       ...movie,
@@ -179,6 +225,12 @@ const MovieManagement = () => {
       directorIds,
       actorIds,
       countryId,
+      premiereDate: movie.premiereDate || movie.releaseDate,
+      releaseDate: movie.releaseDate,
+      endDate: movie.endDate || movie.releaseDate,
+      ageRestriction: movie.ageRestriction || "T0",
+      availableFormats: movie.availableFormats || ["TWO_D"],
+      movieStatus: movie.movieStatus || "UPCOMING",
     });
     setIsModalVisible(true);
   };
@@ -187,34 +239,65 @@ const MovieManagement = () => {
     try {
       await movieService.deleteMovie(id);
       message.success("Xóa phim thành công");
-      fetchMovies(); // Re-fetch movies after deletion
+      fetchMovies();
     } catch (error) {
       message.error("Failed to delete movie.");
       console.error("Error deleting movie:", error);
     }
   };
 
+  const handleThumbnailChange = (info) => {
+    if (info.file) {
+      setThumbnailFile(info.file);
+
+      // Preview the image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setThumbnailUrl(e.target.result);
+      };
+      reader.readAsDataURL(info.file);
+    }
+  };
+
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      // Build schema
-      const data = {
+      setUploading(true);
+
+      // Format dates to yyyy-mm-dd
+      const formatDate = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0]; // Returns yyyy-mm-dd
+      };
+
+      // Build schema matching the required request body
+      const movieData = {
         title: values.title,
         description: values.description,
-        duration: Number(values.duration),
-        releaseDate: values.releaseDate,
         trailerUrl: values.trailerUrl,
-        movieStatus: values.movieStatus,
-        countryId: values.countryId,
-        genreIds: values.genreIds,
+        duration: Number(values.duration),
+        premiereDate: formatDate(values.premiereDate),
+        endDate: formatDate(values.endDate),
         directorIds: values.directorIds,
         actorIds: values.actorIds,
+        ageRestriction: values.ageRestriction,
+        countryId: values.countryId,
+        availableFormats: values.availableFormats,
+        releaseDate: formatDate(values.releaseDate),
+        genreIds: values.genreIds,
+        movieStatus: values.movieStatus,
       };
+
       if (editingMovie) {
-        await movieService.updateMovie(editingMovie.id, data);
+        await movieService.updateMovie(
+          editingMovie.id,
+          movieData,
+          thumbnailFile
+        );
         message.success("Cập nhật phim thành công");
       } else {
-        await movieService.createMovie(data);
+        await movieService.createMovie(movieData, thumbnailFile);
         message.success("Thêm phim thành công");
       }
       setIsModalVisible(false);
@@ -222,6 +305,8 @@ const MovieManagement = () => {
     } catch (error) {
       message.error("Failed to save movie.");
       console.error("Error saving movie:", error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -276,6 +361,8 @@ const MovieManagement = () => {
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
+        confirmLoading={uploading}
+        width={800}
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -285,6 +372,7 @@ const MovieManagement = () => {
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             name="description"
             label="Mô tả"
@@ -292,20 +380,67 @@ const MovieManagement = () => {
           >
             <Input.TextArea />
           </Form.Item>
+
+          <div style={{ display: "flex", gap: "20px" }}>
+            <Form.Item
+              name="duration"
+              label="Thời Lượng (phút)"
+              rules={[{ required: true, message: "Vui lòng nhập thời lượng" }]}
+              style={{ width: "50%" }}
+            >
+              <Input type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="ageRestriction"
+              label="Giới hạn tuổi"
+              rules={[
+                { required: true, message: "Vui lòng chọn giới hạn tuổi" },
+              ]}
+              style={{ width: "50%" }}
+            >
+              <Select>
+                <Select.Option value="T0">0+</Select.Option>
+                <Select.Option value="T13">13+</Select.Option>
+                <Select.Option value="T16">16+</Select.Option>
+                <Select.Option value="T18">18+</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+
+          <div style={{ display: "flex", gap: "20px" }}>
+            <Form.Item
+              name="premiereDate"
+              label="Ngày Khởi Chiếu"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày khởi chiếu" },
+              ]}
+              style={{ width: "50%" }}
+            >
+              <Input type="date" />
+            </Form.Item>
+
+            <Form.Item
+              name="releaseDate"
+              label="Ngày Phát Hành"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày phát hành" },
+              ]}
+              style={{ width: "50%" }}
+            >
+              <Input type="date" />
+            </Form.Item>
+          </div>
+
           <Form.Item
-            name="duration"
-            label="Thời Lượng (phút)"
-            rules={[{ required: true, message: "Vui lòng nhập thời lượng" }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="releaseDate"
-            label="Ngày Phát Hành"
-            rules={[{ required: true, message: "Vui lòng chọn ngày phát hành" }]}
+            name="endDate"
+            label="Ngày Kết Thúc"
+            rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc" }]}
+            style={{ width: "50%" }}
           >
             <Input type="date" />
           </Form.Item>
+
           <Form.Item
             name="trailerUrl"
             label="Trailer URL"
@@ -313,16 +448,36 @@ const MovieManagement = () => {
           >
             <Input />
           </Form.Item>
-          <Form.Item
-            name="movieStatus"
-            label="Trạng Thái"
-            rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-          >
-            <Select>
-              <Select.Option value="UPCOMING">UPCOMING</Select.Option>
-              <Select.Option value="RELEASED">RELEASED</Select.Option>
-            </Select>
-          </Form.Item>
+
+          <div style={{ display: "flex", gap: "20px" }}>
+            <Form.Item
+              name="availableFormats"
+              label="Định dạng phim"
+              rules={[
+                { required: true, message: "Vui lòng chọn định dạng phim" },
+              ]}
+              style={{ width: "50%" }}
+            >
+              <Select mode="multiple">
+                <Select.Option value="TWO_D">2D</Select.Option>
+                <Select.Option value="THREE_D">3D</Select.Option>
+                <Select.Option value="IMAX">IMAX</Select.Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="movieStatus"
+              label="Trạng Thái"
+              rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
+              style={{ width: "50%" }}
+            >
+              <Select>
+                <Select.Option value="UPCOMING">Sắp Chiếu</Select.Option>
+                <Select.Option value="RELEASED">Đang Chiếu</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+
           <Form.Item
             name="countryId"
             label="Quốc Gia"
@@ -331,17 +486,25 @@ const MovieManagement = () => {
             <Select
               showSearch
               optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
+              filterOption={(input, option) => {
+                return (
+                  option &&
+                  typeof option.children === "string" &&
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >=
+                    0
+                );
+              }}
             >
-              {countries.map((country) => (
-                <Select.Option key={country.id} value={country.id}>
-                  {country.name}
-                </Select.Option>
-              ))}
+              {Array.isArray(countries)
+                ? countries.map((country) => (
+                    <Select.Option key={country.id} value={country.id}>
+                      {country.name}
+                    </Select.Option>
+                  ))
+                : null}
             </Select>
           </Form.Item>
+
           <Form.Item
             name="genreIds"
             label="Thể Loại"
@@ -351,14 +514,22 @@ const MovieManagement = () => {
               mode="multiple"
               placeholder="Chọn thể loại"
               optionFilterProp="children"
+              filterOption={(input, option) =>
+                option &&
+                typeof option.children === "string" &&
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
             >
-              {genres.map((genre) => (
-                <Select.Option key={genre.id} value={genre.id}>
-                  {genre.name}
-                </Select.Option>
-              ))}
+              {Array.isArray(genres)
+                ? genres.map((genre) => (
+                    <Select.Option key={genre.id} value={genre.id}>
+                      {genre.name}
+                    </Select.Option>
+                  ))
+                : null}
             </Select>
           </Form.Item>
+
           <Form.Item
             name="directorIds"
             label="Đạo Diễn"
@@ -368,16 +539,24 @@ const MovieManagement = () => {
               mode="multiple"
               placeholder="Chọn đạo diễn"
               optionFilterProp="children"
+              filterOption={(input, option) =>
+                option &&
+                typeof option.children === "string" &&
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
             >
-              {persons
-                .filter((p) => p.occupation === "DIRECTOR")
-                .map((person) => (
-                  <Select.Option key={person.id} value={person.id}>
-                    {person.name}
-                  </Select.Option>
-                ))}
+              {Array.isArray(persons)
+                ? persons
+                    .filter((p) => p.occupation === "DIRECTOR")
+                    .map((person) => (
+                      <Select.Option key={person.id} value={person.id}>
+                        {person.name}
+                      </Select.Option>
+                    ))
+                : null}
             </Select>
           </Form.Item>
+
           <Form.Item
             name="actorIds"
             label="Diễn Viên"
@@ -387,15 +566,46 @@ const MovieManagement = () => {
               mode="multiple"
               placeholder="Chọn diễn viên"
               optionFilterProp="children"
+              filterOption={(input, option) =>
+                option &&
+                typeof option.children === "string" &&
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
             >
-              {persons
-                .filter((p) => p.occupation === "ACTOR")
-                .map((person) => (
-                  <Select.Option key={person.id} value={person.id}>
-                    {person.name}
-                  </Select.Option>
-                ))}
+              {Array.isArray(persons)
+                ? persons
+                    .filter((p) => p.occupation === "ACTOR")
+                    .map((person) => (
+                      <Select.Option key={person.id} value={person.id}>
+                        {person.name}
+                      </Select.Option>
+                    ))
+                : null}
             </Select>
+          </Form.Item>
+
+          <Form.Item label="Ảnh Thumbnail" name="thumbnail">
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              <Upload
+                beforeUpload={() => false}
+                onChange={handleThumbnailChange}
+                showUploadList={false}
+              >
+                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+              </Upload>
+
+              {thumbnailUrl && (
+                <div style={{ marginTop: "10px" }}>
+                  <img
+                    src={thumbnailUrl}
+                    alt="Thumbnail preview"
+                    style={{ maxWidth: "200px", maxHeight: "200px" }}
+                  />
+                </div>
+              )}
+            </div>
           </Form.Item>
         </Form>
       </Modal>

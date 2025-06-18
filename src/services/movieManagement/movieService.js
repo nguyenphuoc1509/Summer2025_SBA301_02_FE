@@ -29,12 +29,30 @@ export const movieService = {
     }
   },
 
-  createMovie: async (data) => {
+  createMovie: async (movieData, thumbnailFile) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await instance.post("movies", data, {
+
+      // Create FormData object
+      const formData = new FormData();
+
+      const movieBlob = new Blob([JSON.stringify(movieData)], {
+        type: "application/json",
+      });
+
+      formData.append("movie", movieBlob);
+
+      if (thumbnailFile) {
+        formData.append("thumbnail", thumbnailFile);
+      }
+
+      // Log the form data for debugging
+      console.log("Form data parts:", formData);
+
+      const response = await instance.post("movies", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          // Don't set Content-Type here, it will be set automatically with boundary
         },
       });
       return response;
@@ -43,12 +61,30 @@ export const movieService = {
     }
   },
 
-  updateMovie: async (id, data) => {
+  updateMovie: async (id, movieData, thumbnailFile) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await instance.put(`movies/${id}`, data, {
+
+      // Create FormData object
+      const formData = new FormData();
+
+      // Create a Blob from the JSON string with the correct content type
+      const movieBlob = new Blob([JSON.stringify(movieData)], {
+        type: "application/json",
+      });
+
+      // Append the movie data as a part named "movie"
+      formData.append("movie", movieBlob);
+
+      // Add thumbnail file if available as a separate part
+      if (thumbnailFile) {
+        formData.append("thumbnail", thumbnailFile);
+      }
+
+      const response = await instance.put(`movies/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          // Don't set Content-Type here, it will be set automatically with boundary
         },
       });
       return response;

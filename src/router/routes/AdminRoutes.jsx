@@ -4,12 +4,12 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import UserManagement from "../../pages/Admin/UserManagement/UserManagement";
 import LoginAdmin from "../../pages/Admin/Login/LoginAdmin";
 import MovieManagement from "../../pages/Admin/MovieManagement/MovieManagement";
-import CinemeManagement from "../../pages/Admin/CinemaManagement/CinemeManagement";
 import ScheduleManagement from "../../pages/Admin/ScheduleManagement/ScheduleManagement";
 import BlogManagement from "../../pages/Admin/BlogManagement/BlogManagement";
 import GenreManagement from "../../pages/Admin/GenreManagement/GenreManagement";
 import PersonManagement from "../../pages/Admin/PersonManagement/PersonManagement";
 import CountryManagement from "../../pages/Admin/CountryManagement/CountryManagement";
+import CinemaManagement from "../../pages/Admin/CinemaManagement/CinemaManagement";
 
 export const AdminRoutes = [
   {
@@ -29,7 +29,7 @@ export const AdminRoutes = [
   },
   {
     path: ROUTES.CINEMA_MANAGEMENT,
-    element: <CinemeManagement />,
+    element: <CinemaManagement />,
     layout: AdminLayout,
   },
   {
