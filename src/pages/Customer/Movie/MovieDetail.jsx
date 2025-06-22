@@ -1,43 +1,71 @@
-import React from "react";
-import imgMovie from "../../../assets/images/movie_01.jpg";
-
-const movie = {
-  banner: imgMovie,
-  poster: imgMovie,
-  title: "Thám Tử Kiên: Kỳ Án Không Đầu",
-  duration: 131,
-  releaseDate: "25/04/2025",
-  rating: 9.5,
-  votes: 1188,
-  country: "Việt Nam",
-  studio: "Galaxy Studio",
-  genres: ["Kinh Dị", "Tâm Lý"],
-  director: "Victor Vũ",
-  cast: ["Quốc Huy", "Đinh Ngọc Diệp", "Trần Quốc Anh"],
-  age: "T16",
-  description: `Bí ẩn, hồi hộp, siêu thực...`,
-};
-
-const nowShowing = [
-  {
-    poster: imgMovie,
-    title: "Mưa Lửa - Anh Trai Vượt Ngàn Chông Gai Movie",
-    rating: 9.7,
-  },
-  {
-    poster: imgMovie,
-    title: "Thám Tử Kiên: Kỳ Án Không Đầu",
-    rating: 9.5,
-  },
-];
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { movieService } from "../../../services/movieManagement/movieService";
 
 const MovieDetail = () => {
+  const { id } = useParams();
+  const [movie, setMovie] = useState(null);
+  const [nowShowing, setNowShowing] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMovieDetail = async () => {
+      try {
+        // Fetch movie details
+        const response = await movieService.getMovieById(id);
+        if (response && response.code === 200) {
+          setMovie(response.result);
+        }
+
+        // Fetch other movies for the sidebar
+        const allMoviesResponse = await movieService.getAllMovies();
+        if (allMoviesResponse && allMoviesResponse.code === 200) {
+          const otherMovies = allMoviesResponse.result.content
+            .filter((m) => m.id !== parseInt(id))
+            .slice(0, 2)
+            .map((movie) => ({
+              id: movie.id,
+              title: movie.title,
+              poster: movie.thumbnailUrl,
+              rating: 8.5, // Default rating
+            }));
+
+          setNowShowing(otherMovies);
+        }
+      } catch (error) {
+        console.error("Error fetching movie details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchMovieDetail();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Đang tải...</div>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Không tìm thấy thông tin phim</div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative bg-white pb-12">
       {/* Banner */}
       <div className="relative h-[480px] w-full overflow-hidden">
         <img
-          src={movie.banner}
+          src={movie.thumbnailUrl}
           alt="banner"
           className="w-full h-full object-cover blur-sm scale-110"
         />
@@ -48,7 +76,7 @@ const MovieDetail = () => {
       <div className="max-w-7xl mx-auto relative">
         <div className="absolute left-0 top-0 -translate-y-1/2 z-10">
           <img
-            src={movie.poster}
+            src={movie.thumbnailUrl}
             alt={movie.title}
             className="w-[260px] h-[370px] object-cover rounded shadow-2xl border-4 border-white"
           />
@@ -60,53 +88,51 @@ const MovieDetail = () => {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold">{movie.title}</h1>
               <span className="bg-orange-400 text-white text-xs font-bold px-2 py-1 rounded ml-2">
-                {movie.age}
+                {movie.ageRestriction}
               </span>
             </div>
             <div className="flex items-center gap-4 text-gray-500 text-sm mb-2">
               <span>⏱ {movie.duration} Phút</span>
               <span>•</span>
-              <span>{movie.releaseDate}</span>
+              <span>
+                {new Date(movie.releaseDate).toLocaleDateString("vi-VN")}
+              </span>
             </div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-orange-500 font-bold text-xl">
-                ★ {movie.rating}
-              </span>
-              <span className="text-gray-500 text-sm">
-                ({movie.votes} votes)
-              </span>
+              <span className="text-orange-500 font-bold text-xl">★ 8.5</span>
+              <span className="text-gray-500 text-sm">(1000 votes)</span>
             </div>
             <div className="mb-2 text-gray-700">
-              <span className="font-semibold">Quốc gia:</span> {movie.country}
-            </div>
-            <div className="mb-2 text-gray-700">
-              <span className="font-semibold">Nhà sản xuất:</span>{" "}
-              {movie.studio}
+              <span className="font-semibold">Quốc gia:</span>{" "}
+              {movie.country ? movie.country.name : "Chưa cập nhật"}
             </div>
             <div className="mb-2 flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-gray-700">Thể loại:</span>
-              {movie.genres.map((g) => (
-                <span
-                  key={g}
-                  className="bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm mr-1"
-                >
-                  {g}
-                </span>
-              ))}
+              {movie.genres &&
+                movie.genres.map((g) => (
+                  <span
+                    key={g.id}
+                    className="bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm mr-1"
+                  >
+                    {g.name}
+                  </span>
+                ))}
             </div>
             <div className="mb-2 text-gray-700">
-              <span className="font-semibold">Đạo diễn:</span> {movie.director}
+              <span className="font-semibold">Đạo diễn:</span>{" "}
+              {movie.directors && movie.directors.map((d) => d.name).join(", ")}
             </div>
             <div className="mb-2 flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-gray-700">Diễn viên:</span>
-              {movie.cast.map((c) => (
-                <span
-                  key={c}
-                  className="bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm mr-1"
-                >
-                  {c}
-                </span>
-              ))}
+              {movie.actors &&
+                movie.actors.map((actor) => (
+                  <span
+                    key={actor.id}
+                    className="bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm mr-1"
+                  >
+                    {actor.name}
+                  </span>
+                ))}
             </div>
           </div>
           {/* Right: Now Showing */}
@@ -115,7 +141,7 @@ const MovieDetail = () => {
               PHIM ĐANG CHIẾU
             </h3>
             {nowShowing.map((film) => (
-              <div key={film.title} className="mb-6">
+              <div key={film.id} className="mb-6">
                 <img
                   src={film.poster}
                   alt={film.title}

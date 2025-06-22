@@ -15,6 +15,21 @@ export const personService = {
     }
   },
 
+  getPersonsByOccupation: async (occupation, page = 0, size = 10) => {
+    try {
+      const response = await instance.get(`persons`, {
+        params: {
+          page,
+          size,
+          occupation,
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   getPersonById: async (id) => {
     try {
       const token = localStorage.getItem("token");

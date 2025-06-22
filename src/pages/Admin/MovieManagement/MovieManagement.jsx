@@ -47,13 +47,34 @@ const MovieManagement = () => {
     setLoading(true);
     try {
       const response = await movieService.getAllMovies();
-      const processedMovies = response.result.content.map((movie) => ({
-        ...movie,
-        country: movie.country?.name || "",
-        genres: movie.genres?.map((genre) => genre.name) || [],
-        directors: movie.directors?.map((director) => director.name) || [],
-        actors: movie.actors?.map((actor) => actor.name) || [],
-      }));
+      console.log("Raw movie data:", response.result.content);
+
+      const processedMovies = response.result.content.map((movie) => {
+        // Log the structure of each movie for debugging
+        console.log(`Processing movie ${movie.id} (${movie.title}):`, {
+          country: movie.country,
+          genres: movie.genres,
+          directors: movie.directors,
+          actors: movie.actors,
+        });
+
+        return {
+          ...movie,
+          country: movie.country?.name || "",
+          genres: movie.genres?.map((genre) => genre.name) || [],
+          directors:
+            movie.directors?.map((director) => ({
+              id: director.id,
+              name: director.name,
+            })) || [],
+          actors:
+            movie.actors?.map((actor) => ({
+              id: actor.id,
+              name: actor.name,
+            })) || [],
+        };
+      });
+
       setMovies(processedMovies);
     } catch (error) {
       message.error("Failed to fetch movies.");
@@ -66,9 +87,11 @@ const MovieManagement = () => {
   const fetchCountries = async () => {
     try {
       const res = await countryService.getAllCountries();
+      console.log("Fetched countries:", res.result.content);
       setCountries(res.result.content);
     } catch (error) {
       message.error("Failed to fetch countries.");
+      console.error("Error fetching countries:", error);
     }
   };
 
@@ -84,27 +107,29 @@ const MovieManagement = () => {
   const fetchGenres = async () => {
     try {
       const res = await genreService.getAllGenres();
+      console.log("Fetched genres:", res.result.content);
       setGenres(res.result.content);
     } catch (error) {
       message.error("Failed to fetch genres.");
+      console.error("Error fetching genres:", error);
     }
   };
 
   const columns = [
     {
-      title: "ID",
+      title: "Mã phim",
       dataIndex: "id",
       key: "id",
       sorter: (a, b) => a.id - b.id,
     },
     {
-      title: "Title",
+      title: "Tên phim",
       dataIndex: "title",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
     },
     {
-      title: "Thumbnail",
+      title: "Ảnh bìa",
       dataIndex: "thumbnailUrl",
       key: "thumbnailUrl",
       render: (thumbnailUrl) =>
@@ -115,31 +140,31 @@ const MovieManagement = () => {
         ),
     },
     {
-      title: "Director",
+      title: "Đạo diễn",
       dataIndex: "directors",
       key: "directors",
       render: (directors) =>
-        Array.isArray(directors) ? directors.join(", ") : "",
+        Array.isArray(directors) ? directors.map((d) => d.name).join(", ") : "",
     },
     {
-      title: "Country",
+      title: "Quốc gia",
       dataIndex: "country",
       key: "country",
     },
     {
-      title: "Release Date",
+      title: "Ngày phát hành",
       dataIndex: "releaseDate",
       key: "releaseDate",
       sorter: (a, b) => new Date(a.releaseDate) - new Date(b.releaseDate),
     },
     {
-      title: "Duration (min)",
+      title: "Thời lượng (phút)",
       dataIndex: "duration",
       key: "duration",
       sorter: (a, b) => a.duration - b.duration,
     },
     {
-      title: "Genre",
+      title: "Thể loại",
       dataIndex: "genres",
       key: "genres",
       render: (genres) =>
@@ -152,13 +177,14 @@ const MovieManagement = () => {
           : null,
     },
     {
-      title: "Actors",
+      title: "Diễn viên",
       dataIndex: "actors",
       key: "actors",
-      render: (actors) => (Array.isArray(actors) ? actors.join(", ") : ""),
+      render: (actors) =>
+        Array.isArray(actors) ? actors.map((a) => a.name).join(", ") : "",
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "movieStatus",
       key: "movieStatus",
       render: (status) => (
@@ -168,20 +194,20 @@ const MovieManagement = () => {
       ),
     },
     {
-      title: "Actions",
+      title: "Thao tác",
       key: "actions",
       render: (_, record) => (
         <Space>
           <Button type="primary" onClick={() => handleEdit(record)}>
-            Edit
+            Sửa
           </Button>
           <Popconfirm
-            title="Are you sure you want to delete this movie?"
+            title="Bạn có chắc chắn muốn xóa phim này không?"
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button danger>Delete</Button>
+            <Button danger>Xóa</Button>
           </Popconfirm>
         </Space>
       ),
@@ -202,22 +228,77 @@ const MovieManagement = () => {
     setEditingMovie(movie);
     setThumbnailUrl(movie.thumbnailUrl || "");
 
-    const genreIds = Array.isArray(movie.genres)
-      ? movie.genres.map((g) => (typeof g === "object" ? g.id : g))
-      : [];
+    // Extract genre IDs correctly
+    let genreIds = [];
+    if (movie.genres) {
+      // If genres are objects with id properties
+      if (
+        movie.genres.length > 0 &&
+        typeof movie.genres[0] === "object" &&
+        "id" in movie.genres[0]
+      ) {
+        genreIds = movie.genres.map((g) => Number(g.id));
+      }
+      // If genres are already IDs
+      else if (movie.genreIds && Array.isArray(movie.genreIds)) {
+        genreIds = movie.genreIds.map((id) => Number(id));
+      }
+      // If we only have genre names, we need to find the corresponding IDs
+      else {
+        const genreNames = movie.genres;
+        genreIds = genres
+          .filter((g) => genreNames.includes(g.name))
+          .map((g) => Number(g.id));
+      }
+    }
 
-    const directorIds = Array.isArray(movie.directors)
-      ? movie.directors.map((d) => (typeof d === "object" ? d.id : d))
-      : [];
+    // Extract director IDs correctly
+    let directorIds = [];
+    if (movie.directors) {
+      directorIds = movie.directors
+        .map((d) => {
+          if (typeof d === "object" && d.id) return Number(d.id);
+          return typeof d === "string" ? null : Number(d);
+        })
+        .filter((id) => id !== null);
+    }
 
-    const actorIds = Array.isArray(movie.actors)
-      ? movie.actors.map((a) => (typeof a === "object" ? a.id : a))
-      : [];
+    // Extract actor IDs correctly
+    let actorIds = [];
+    if (movie.actors) {
+      actorIds = movie.actors
+        .map((a) => {
+          if (typeof a === "object" && a.id) return Number(a.id);
+          return typeof a === "string" ? null : Number(a);
+        })
+        .filter((id) => id !== null);
+    }
 
-    const countryId =
-      movie.country && typeof movie.country === "object"
-        ? movie.country.id
-        : movie.countryId;
+    // Extract country ID correctly
+    let countryId = null;
+    if (movie.country) {
+      if (typeof movie.country === "object" && movie.country.id) {
+        countryId = Number(movie.country.id);
+      } else if (movie.countryId) {
+        countryId = Number(movie.countryId);
+      } else {
+        // Try to find the country by name in the countries list
+        const countryName =
+          typeof movie.country === "string" ? movie.country : "";
+        const foundCountry = countries.find((c) => c.name === countryName);
+        if (foundCountry) {
+          countryId = Number(foundCountry.id);
+        }
+      }
+    }
+
+    console.log("Setting form values:", {
+      genreIds,
+      directorIds,
+      actorIds,
+      countryId,
+      movie,
+    });
 
     form.setFieldsValue({
       ...movie,
@@ -271,6 +352,38 @@ const MovieManagement = () => {
         return date.toISOString().split("T")[0]; // Returns yyyy-mm-dd
       };
 
+      // Ensure IDs are valid numbers
+      const directorIds = values.directorIds
+        ? values.directorIds.map((id) => Number(id)).filter((id) => !isNaN(id))
+        : [];
+      const actorIds = values.actorIds
+        ? values.actorIds.map((id) => Number(id)).filter((id) => !isNaN(id))
+        : [];
+      const genreIds = values.genreIds
+        ? values.genreIds.map((id) => Number(id)).filter((id) => !isNaN(id))
+        : [];
+      const countryId = values.countryId ? Number(values.countryId) : null;
+
+      // Validate that we have valid genre IDs
+      if (genreIds.length === 0) {
+        message.error("Vui lòng chọn ít nhất một thể loại phim");
+        setUploading(false);
+        return;
+      }
+
+      // Validate that all genre IDs exist in the genres list
+      const validGenreIds = genres.map((g) => g.id);
+      const invalidGenreIds = genreIds.filter(
+        (id) => !validGenreIds.includes(id)
+      );
+      if (invalidGenreIds.length > 0) {
+        message.error(
+          `Một số thể loại không hợp lệ: ${invalidGenreIds.join(", ")}`
+        );
+        setUploading(false);
+        return;
+      }
+
       // Build schema matching the required request body
       const movieData = {
         title: values.title,
@@ -279,15 +392,18 @@ const MovieManagement = () => {
         duration: Number(values.duration),
         premiereDate: formatDate(values.premiereDate),
         endDate: formatDate(values.endDate),
-        directorIds: values.directorIds,
-        actorIds: values.actorIds,
+        directorIds: directorIds,
+        actorIds: actorIds,
         ageRestriction: values.ageRestriction,
-        countryId: values.countryId,
+        countryId: countryId,
         availableFormats: values.availableFormats,
         releaseDate: formatDate(values.releaseDate),
-        genreIds: values.genreIds,
+        genreIds: genreIds,
         movieStatus: values.movieStatus,
       };
+
+      // For debugging
+      console.log("Sending movie data:", JSON.stringify(movieData));
 
       if (editingMovie) {
         await movieService.updateMovie(
@@ -303,7 +419,9 @@ const MovieManagement = () => {
       setIsModalVisible(false);
       fetchMovies();
     } catch (error) {
-      message.error("Failed to save movie.");
+      message.error(
+        `Failed to save movie: ${error.message || "Unknown error"}`
+      );
       console.error("Error saving movie:", error);
     } finally {
       setUploading(false);
@@ -330,12 +448,12 @@ const MovieManagement = () => {
           onChange={(e) => setSearchText(e.target.value)}
         />
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Thêm Phim
+          Thêm phim
         </Button>
       </div>
 
       {loading ? (
-        <p>Loading movies...</p>
+        <p>Đang tải phim...</p>
       ) : filteredMovies.length === 0 ? (
         <p
           style={{
@@ -345,7 +463,7 @@ const MovieManagement = () => {
             color: "#888",
           }}
         >
-          Chưa có phim nào
+          Chưa có phim nào.
         </p>
       ) : (
         <Table
@@ -357,7 +475,7 @@ const MovieManagement = () => {
       )}
 
       <Modal
-        title={editingMovie ? "Sửa Phim" : "Thêm Phim"}
+        title={editingMovie ? "Sửa phim" : "Thêm phim"}
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
@@ -367,7 +485,7 @@ const MovieManagement = () => {
         <Form form={form} layout="vertical">
           <Form.Item
             name="title"
-            label="Tên Phim"
+            label="Tên phim"
             rules={[{ required: true, message: "Vui lòng nhập tên phim" }]}
           >
             <Input />
@@ -384,7 +502,7 @@ const MovieManagement = () => {
           <div style={{ display: "flex", gap: "20px" }}>
             <Form.Item
               name="duration"
-              label="Thời Lượng (phút)"
+              label="Thời lượng (phút)"
               rules={[{ required: true, message: "Vui lòng nhập thời lượng" }]}
               style={{ width: "50%" }}
             >
@@ -411,7 +529,7 @@ const MovieManagement = () => {
           <div style={{ display: "flex", gap: "20px" }}>
             <Form.Item
               name="premiereDate"
-              label="Ngày Khởi Chiếu"
+              label="Ngày khởi chiếu"
               rules={[
                 { required: true, message: "Vui lòng chọn ngày khởi chiếu" },
               ]}
@@ -422,7 +540,7 @@ const MovieManagement = () => {
 
             <Form.Item
               name="releaseDate"
-              label="Ngày Phát Hành"
+              label="Ngày phát hành"
               rules={[
                 { required: true, message: "Vui lòng chọn ngày phát hành" },
               ]}
@@ -434,7 +552,7 @@ const MovieManagement = () => {
 
           <Form.Item
             name="endDate"
-            label="Ngày Kết Thúc"
+            label="Ngày kết thúc"
             rules={[{ required: true, message: "Vui lòng chọn ngày kết thúc" }]}
             style={{ width: "50%" }}
           >
@@ -472,8 +590,8 @@ const MovieManagement = () => {
               style={{ width: "50%" }}
             >
               <Select>
-                <Select.Option value="UPCOMING">Sắp Chiếu</Select.Option>
-                <Select.Option value="RELEASED">Đang Chiếu</Select.Option>
+                <Select.Option value="UPCOMING">Sắp chiếu</Select.Option>
+                <Select.Option value="RELEASED">Đang chiếu</Select.Option>
               </Select>
             </Form.Item>
           </div>
@@ -495,13 +613,17 @@ const MovieManagement = () => {
                 );
               }}
             >
-              {Array.isArray(countries)
-                ? countries.map((country) => (
-                    <Select.Option key={country.id} value={country.id}>
-                      {country.name}
-                    </Select.Option>
-                  ))
-                : null}
+              {Array.isArray(countries) && countries.length > 0 ? (
+                countries.map((country) => (
+                  <Select.Option key={country.id} value={Number(country.id)}>
+                    {country.name}
+                  </Select.Option>
+                ))
+              ) : (
+                <Select.Option value={null} disabled>
+                  No countries available
+                </Select.Option>
+              )}
             </Select>
           </Form.Item>
 

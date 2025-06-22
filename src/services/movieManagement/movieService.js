@@ -3,12 +3,7 @@ import { instance } from "../instance";
 export const movieService = {
   getAllMovies: async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await instance.get("movies", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await instance.get("movies");
       return response;
     } catch (error) {
       throw error;
@@ -17,12 +12,7 @@ export const movieService = {
 
   getMovieById: async (id) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await instance.get(`movies/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await instance.get(`movies/${id}`);
       return response;
     } catch (error) {
       throw error;

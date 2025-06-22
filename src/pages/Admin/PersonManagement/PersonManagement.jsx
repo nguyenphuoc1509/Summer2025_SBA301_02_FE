@@ -10,7 +10,6 @@ import {
   Popconfirm,
   Tag,
   Select,
-  DatePicker,
   Upload,
   Tabs,
 } from "antd";
@@ -35,7 +34,7 @@ const PersonManagement = () => {
   const [editingPerson, setEditingPerson] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fileList, setFileList] = useState([]); // State to manage uploaded files for Ant Design Upload
+  const [fileList, setFileList] = useState([]);
   const [activeTab, setActiveTab] = useState("ACTOR");
   const [countries, setCountries] = useState([]);
 
@@ -94,7 +93,7 @@ const PersonManagement = () => {
       title: "Birth Date",
       dataIndex: "birthDate",
       key: "birthDate",
-      render: (date) => (date ? moment(date).format("YYYY-MM-DD") : ""),
+      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
       sorter: (a, b) => new Date(a.birthDate) - new Date(b.birthDate),
     },
     {
@@ -135,11 +134,17 @@ const PersonManagement = () => {
   const handleEdit = (person) => {
     setEditingPerson(person);
     setActiveTab(person.occupation || "ACTOR");
+
+    // Format date to YYYY-MM-DD for input type="date"
+    const birthDate = person.birthDate
+      ? moment(person.birthDate).format("YYYY-MM-DD")
+      : null;
+
     form.setFieldsValue({
       ...person,
       occupation: person.occupation || "ACTOR",
       countryId: person.countryId,
-      birthDate: person.birthDate ? moment(person.birthDate) : null,
+      birthDate: birthDate,
       images: person.images
         ? person.images.map((url, index) => ({
             uid: `${url}-${index}`,
@@ -197,12 +202,12 @@ const PersonManagement = () => {
         }
       }
 
+      // birthDate is already in YYYY-MM-DD format from the input type="date"
+      const formattedBirthDate = values.birthDate;
+
       const payload = {
         ...values,
-        // Convert moment object to "YYYY-MM-DD" string for API
-        birthDate: values.birthDate
-          ? values.birthDate.format("YYYY-MM-DD")
-          : null,
+        birthDate: formattedBirthDate,
         images: imageUrls, // Send the array of URLs
       };
 
@@ -299,12 +304,20 @@ const PersonManagement = () => {
         }}
         width={600}
       >
-        <Tabs activeKey={activeTab} onChange={handleTabChange} style={{ marginBottom: 16 }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          style={{ marginBottom: 16 }}
+        >
           <TabPane tab="Diễn viên" key="ACTOR" />
           <TabPane tab="Đạo diễn" key="DIRECTOR" />
         </Tabs>
         <Form form={form} layout="vertical">
-          <Form.Item name="occupation" initialValue={activeTab} style={{ display: "none" }}>
+          <Form.Item
+            name="occupation"
+            initialValue={activeTab}
+            style={{ display: "none" }}
+          >
             <Input />
           </Form.Item>
           <Form.Item
@@ -322,28 +335,34 @@ const PersonManagement = () => {
             <TextArea rows={3} />
           </Form.Item>
           <Form.Item
-            name="birthYear"
-            label="Năm Sinh"
+            name="birthDate"
+            label="Ngày Sinh"
             rules={[
-              { required: true, message: "Vui lòng nhập năm sinh" },
-              {
-                pattern: /^[0-9]{4}$/,
-                message: "Năm sinh phải gồm 4 chữ số",
-              },
+              { required: true, message: "Vui lòng nhập ngày sinh" },
               {
                 validator: (_, value) => {
                   if (!value) return Promise.resolve();
-                  const year = Number(value);
-                  const currentYear = new Date().getFullYear();
-                  if (year < 1800 || year > currentYear) {
+
+                  // Check if date is in the future
+                  const selectedDate = new Date(value);
+                  const currentDate = new Date();
+                  if (selectedDate > currentDate) {
+                    return Promise.reject(
+                      "Ngày sinh không thể trong tương lai"
+                    );
+                  }
+
+                  // Check if year is valid
+                  if (selectedDate.getFullYear() < 1800) {
                     return Promise.reject("Năm sinh không hợp lệ");
                   }
+
                   return Promise.resolve();
                 },
               },
             ]}
           >
-            <Input placeholder="Nhập năm sinh, ví dụ: 1990" maxLength={4} />
+            <Input type="date" />
           </Form.Item>
           <Form.Item
             name="height"

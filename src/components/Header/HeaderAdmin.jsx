@@ -9,8 +9,8 @@ const HeaderAdmin = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Xử lý logout ở đây
-    navigate("/admin/login");
+    localStorage.clear("token");
+    navigate("/admin");
   };
 
   return (

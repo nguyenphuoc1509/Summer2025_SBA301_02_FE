@@ -1,59 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FilterBar from "../../../components/Cinema/FilterBar";
 import ItemList from "../../../components/Cinema/ItemList";
-import imgEX from "../../../assets/images/movie_01.jpg";
-
-// Giả sử có data phim
-const movies = [
-  {
-    id: 1,
-    poster: imgEX,
-    title: "Avengers: Endgame",
-    description:
-      "Cú búng tay của Thanos đã khiến toàn bộ dân số biến mất một nửa...",
-    likes: 2605208,
-    views: 2605208,
-    genre: "action",
-    country: "us",
-    // ... các trường khác nếu cần
-  },
-  {
-    id: 2,
-    poster: imgEX,
-    title: "AVENGERS: INFINITY WAR",
-    description:
-      "Biệt Đội Siêu Anh Hùng và đồng minh tiếp tục bảo vệ thế giới...",
-    likes: 1336671,
-    views: 1336671,
-    genre: "action",
-    country: "us",
-  },
-  {
-    id: 3,
-    poster: imgEX,
-    title: "Cua Lại Vợ Bầu",
-    description: "Một bộ phim hài tình cảm Việt Nam...",
-    likes: 1054569,
-    views: 1054569,
-    genre: "comedy",
-    country: "vn",
-  },
-  {
-    id: 4,
-    poster: imgEX,
-    title: "Aquaman",
-    description:
-      "Arthur Curry là kết tinh tình yêu của một người đàn ông bình thường...",
-    likes: 928087,
-    views: 928087,
-    genre: "action",
-    country: "us",
-  },
-];
+import { personService } from "../../../services/personManagement/personService";
 
 const Director = () => {
+  const [directors, setDirectors] = useState([]);
   const [genre, setGenre] = useState("");
   const [country, setCountry] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchDirectors();
+  }, []);
+
+  const fetchDirectors = async () => {
+    setLoading(true);
+    try {
+      const response = await personService.getPersonsByOccupation("DIRECTOR");
+      if (response && response.result && response.result.content) {
+        const directorsData = response.result.content.map((director) => ({
+          id: director.id,
+          poster:
+            director.images && director.images.length > 0
+              ? director.images[0]
+              : "",
+          title: director.name,
+          description: director.biography || director.description || "",
+          views: 1000, // Placeholder value
+          likes: 500, // Placeholder value
+          genre: "", // These can be populated if needed
+          country: director.country || "",
+        }));
+        setDirectors(directorsData);
+      }
+    } catch (error) {
+      console.error("Error fetching directors:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filters = [
     {
@@ -78,10 +63,10 @@ const Director = () => {
     },
   ];
 
-  const filteredMovies = movies.filter(
-    (movie) =>
-      (genre === "" || movie.genre === genre) &&
-      (country === "" || movie.country === country)
+  const filteredDirectors = directors.filter(
+    (director) =>
+      (genre === "" || director.genre === genre) &&
+      (country === "" || director.country === country)
   );
 
   return (
@@ -89,7 +74,11 @@ const Director = () => {
       <h2 className="text-2xl font-bold mb-4 max-w-7xl mx-auto">ĐẠO DIỄN</h2>
       <FilterBar filters={filters} />
       <hr className="mb-4 max-w-7xl mx-auto border-sky-700 border-2" />
-      <ItemList items={filteredMovies} />
+      {loading ? (
+        <p className="text-center">Đang tải dữ liệu...</p>
+      ) : (
+        <ItemList items={filteredDirectors} />
+      )}
     </div>
   );
 };

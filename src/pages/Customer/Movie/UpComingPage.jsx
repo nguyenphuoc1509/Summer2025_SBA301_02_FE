@@ -1,42 +1,36 @@
 import React, { useState, useEffect } from "react";
 import MovieGrid from "../../../components/Movie/MovieGrid";
-import img from "../../../assets/images/movie_02.jpg";
+import { movieService } from "../../../services/movieManagement/movieService";
 
 const UpComingPage = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
     const fetchMovies = async () => {
       try {
-        // Simulated API response
-        const mockMovies = [
-          {
-            id: 1,
-            title: "Kung Fu Panda 4",
-            posterSrc: img,
-            duration: "94 phút",
-            rating: 8.0,
-            category: "Hoạt hình",
-            href: "/phim/kung-fu-panda-4",
-          },
-          {
-            id: 2,
-            title: "Godzilla x Kong: The New Empire",
-            posterSrc: img,
-            duration: "115 phút",
-            rating: 7.8,
-            category: "Hành động",
-            href: "/phim/godzilla-x-kong",
-          },
-          // Add more mock movies as needed
-        ];
+        const response = await movieService.getAllMovies();
+        if (response && response.code === 200) {
+          const allMovies = response.result.content;
 
-        setMovies(mockMovies);
-        setLoading(false);
+          // Filter only UPCOMING movies
+          const upcomingMovies = allMovies
+            .filter((movie) => movie.movieStatus === "UPCOMING")
+            .map((movie) => ({
+              id: movie.id,
+              title: movie.title,
+              posterSrc: movie.thumbnailUrl,
+              rating: 8.5, // Default rating since it's not in the API
+              duration: `${movie.duration} phút`,
+              category: movie.genres.map((genre) => genre.name).join(", "),
+              href: `/phim/${movie.id}`,
+            }));
+
+          setMovies(upcomingMovies);
+        }
       } catch (error) {
         console.error("Error fetching movies:", error);
+      } finally {
         setLoading(false);
       }
     };

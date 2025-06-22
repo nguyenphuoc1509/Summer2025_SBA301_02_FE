@@ -3,7 +3,7 @@ export const ROUTES = {
   HOME: "/",
   NOW_SHOWING: "/phim-dang-chieu",
   UPCOMING: "/phim-sap-chieu",
-  MOVIE_DETAIL: "/phim/:slug",
+  MOVIE_DETAIL: "/phim/:id",
   MOVIE_GENRE: "/dien-anh",
   MOVIE_ACTOR: "/dien-vien",
   MOVIE_DIRECTOR: "/dao-dien",

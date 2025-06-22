@@ -1,103 +1,94 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../../../components/Carousel";
 import { Film, Clock, ThumbsUp, Calendar, Star } from "lucide-react";
-import imgMovie from "../../../assets/images/movie_01.jpg";
 import MovieGrid from "../../../components/Movie/MovieGrid";
-
-// Predefined movie data for easy modification
-const moviesNowShowing = [
-  {
-    id: 1,
-    title: "Dune: Part Two",
-    posterSrc: imgMovie,
-    rating: 8.5,
-    duration: "166 phút",
-    category: "Hành Động, Phiêu Lưu, Khoa Học Viễn Tưởng",
-    href: "/phim/dune-2",
-  },
-  {
-    id: 2,
-    title: "Quán Hiền",
-    posterSrc: imgMovie,
-    rating: 7.8,
-    duration: "110 phút",
-    category: "Kinh Dị, Hài",
-    href: "/phim/quan-hien",
-  },
-  {
-    id: 3,
-    title: "Gojira: Minus One",
-    posterSrc: imgMovie,
-    rating: 8.2,
-    duration: "124 phút",
-    category: "Hành Động, Phiêu Lưu",
-    href: "/phim/gojira-minus-one",
-  },
-  {
-    id: 4,
-    title: "Khắc Tinh Của Quỷ",
-    posterSrc: imgMovie,
-    rating: 7.5,
-    duration: "96 phút",
-    category: "Kinh Dị",
-    href: "/phim/khac-tinh-cua-quy",
-  },
-];
-
-// Dữ liệu mẫu phim sắp chiếu
-const moviesUpComing = [
-  {
-    id: 101,
-    title: "Địa Đạo",
-    posterSrc: imgMovie,
-    rating: 8.8,
-    duration: "105 phút",
-    category: "Kinh Dị, Hành Động",
-    href: "/phim/dia-dao",
-  },
-  {
-    id: 102,
-    title: "Sống Sót Dưới Bóng Đêm",
-    posterSrc: imgMovie,
-    rating: 8.2,
-    duration: "98 phút",
-    category: "Kinh Dị",
-    href: "/phim/song-sot-duoi-bong-dem",
-  },
-];
-
-// Predefined events data
-const cinemaEvents = [
-  {
-    id: 1,
-    title: "Happy Day - Ngày Tri Ân Thành Viên",
-    imageSrc: imgMovie,
-    date: "Mỗi thứ Tư hàng tuần",
-    description: "Ưu đãi giảm giá vé xem phim đến 50% cho thành viên G-Star",
-    href: "/su-kien/happy-day",
-  },
-  {
-    id: 2,
-    title: "G-Star: Chương Trình Thành Viên Bạc, Vàng, Bạch Kim",
-    imageSrc: imgMovie,
-    date: "Toàn thời gian",
-    description: "Tích điểm đổi quà, nhận ưu đãi đặc biệt dành cho thành viên",
-    href: "/su-kien/g-star",
-  },
-  {
-    id: 3,
-    title: "U22 - Ưu Đãi Giá Vé Cho Người Trẻ",
-    imageSrc: imgMovie,
-    date: "Hàng ngày",
-    description: "Ưu đãi giá vé chỉ từ 50.000đ cho khách hàng dưới 22 tuổi",
-    href: "/su-kien/u22",
-  },
-];
+import { movieService } from "../../../services/movieManagement/movieService";
 
 const Homepage = () => {
   const [tab, setTab] = useState("now");
+  const [moviesNowShowing, setMoviesNowShowing] = useState([]);
+  const [moviesUpComing, setMoviesUpComing] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await movieService.getAllMovies();
+        if (response && response.code === 200) {
+          const allMovies = response.result.content;
+
+          // Filter movies by status
+          const nowShowing = allMovies
+            .filter((movie) => movie.movieStatus === "NOW_SHOWING")
+            .map((movie) => ({
+              id: movie.id,
+              title: movie.title,
+              posterSrc: movie.thumbnailUrl,
+              rating: 8.5, // Default rating since it's not in the API
+              duration: `${movie.duration} phút`,
+              category: movie.genres.map((genre) => genre.name).join(", "),
+              href: `/phim/${movie.id}`,
+            }));
+
+          const upcoming = allMovies
+            .filter((movie) => movie.movieStatus === "UPCOMING")
+            .map((movie) => ({
+              id: movie.id,
+              title: movie.title,
+              posterSrc: movie.thumbnailUrl,
+              rating: 8.5, // Default rating since it's not in the API
+              duration: `${movie.duration} phút`,
+              category: movie.genres.map((genre) => genre.name).join(", "),
+              href: `/phim/${movie.id}`,
+            }));
+
+          setMoviesNowShowing(nowShowing);
+          setMoviesUpComing(upcoming);
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  // Predefined events data
+  const cinemaEvents = [
+    {
+      id: 1,
+      title: "Happy Day - Ngày Tri Ân Thành Viên",
+      imageSrc:
+        "https://res.cloudinary.com/dxhje4egc/image/upload/v1750227895/movies/thumbnails/amarviq3fsysupfmtw1t.jpg",
+      date: "Mỗi thứ Tư hàng tuần",
+      description: "Ưu đãi giảm giá vé xem phim đến 50% cho thành viên G-Star",
+      href: "/su-kien/happy-day",
+    },
+    {
+      id: 2,
+      title: "G-Star: Chương Trình Thành Viên Bạc, Vàng, Bạch Kim",
+      imageSrc:
+        "https://res.cloudinary.com/dxhje4egc/image/upload/v1750227895/movies/thumbnails/amarviq3fsysupfmtw1t.jpg",
+      date: "Toàn thời gian",
+      description:
+        "Tích điểm đổi quà, nhận ưu đãi đặc biệt dành cho thành viên",
+      href: "/su-kien/g-star",
+    },
+    {
+      id: 3,
+      title: "U22 - Ưu Đãi Giá Vé Cho Người Trẻ",
+      imageSrc:
+        "https://res.cloudinary.com/dxhje4egc/image/upload/v1750227895/movies/thumbnails/amarviq3fsysupfmtw1t.jpg",
+      date: "Hàng ngày",
+      description: "Ưu đãi giá vé chỉ từ 50.000đ cho khách hàng dưới 22 tuổi",
+      href: "/su-kien/u22",
+    },
+  ];
+
   return (
     <div className="bg-gray-50">
       {/* Main Carousel */}
@@ -130,7 +121,9 @@ const Homepage = () => {
               Sắp chiếu
             </button>
           </div>
-          {tab === "now" ? (
+          {loading ? (
+            <div className="text-center py-8">Đang tải...</div>
+          ) : tab === "now" ? (
             <>
               <MovieGrid movies={moviesNowShowing} />
               <div className="text-center mt-8">

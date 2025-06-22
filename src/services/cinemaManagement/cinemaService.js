@@ -2,13 +2,17 @@ import { instance } from "../instance";
 
 const cinemaService = {
   // Kích hoạt rạp chiếu phim theo ID
-  activateCinema: async (id) => {
+  activateCinema: async (id, active) => {
     try {
-      const response = await instance.put(`cinemas/${id}/active`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await instance.put(
+        `cinemas/${id}/active?active=${active}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       return response;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -30,16 +34,26 @@ const cinemaService = {
   },
 
   // Tạo mới rạp chiếu phim
-  createCinema: async (data) => {
+  createCinema: async (cinamaData, thumbnailFile) => {
     try {
-      const response = await instance.post("cinemas", data, {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      const movieBlob = new Blob([JSON.stringify(cinamaData)], {
+        type: "application/json",
+      });
+      formData.append("cinema", movieBlob);
+      if (thumbnailFile) {
+        formData.append("thumbnail", thumbnailFile);
+      }
+
+      const response = await instance.post("cinemas", formData, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error;
     }
   },
 

@@ -20,6 +20,8 @@ import {
   List,
   Tag,
   Empty,
+  Upload,
+  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -30,6 +32,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DollarOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import cinemaService from "../../../services/cinemaManagement/cinemaService";
 import moment from "moment";
@@ -46,6 +49,7 @@ const CinemaManagement = () => {
   const [selectedCinemaId, setSelectedCinemaId] = useState(null);
   const [cinemaDetails, setCinemaDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [form] = Form.useForm();
 
   // Fetch cinema list
@@ -56,10 +60,10 @@ const CinemaManagement = () => {
       if (response?.result) {
         setCinemas(response.result);
       } else {
-        throw new Error(response?.message || "No data found");
+        throw new Error(response?.message || "Không tìm thấy dữ liệu");
       }
     } catch (error) {
-      console.error("Error fetching cinemas:", error);
+      console.error("Lỗi khi lấy danh sách rạp chiếu phim:", error);
     } finally {
       setLoading(false);
     }
@@ -77,10 +81,10 @@ const CinemaManagement = () => {
       if (response?.result) {
         setCinemaDetails(response.result);
       } else {
-        throw new Error(response?.message || "No details found");
+        throw new Error(response?.message || "Không tìm thấy chi tiết");
       }
     } catch (error) {
-      console.error("Error fetching cinema details:", error);
+      console.error("Lỗi khi lấy chi tiết rạp chiếu phim:", error);
     } finally {
       setDetailsLoading(false);
     }
@@ -97,14 +101,22 @@ const CinemaManagement = () => {
   const handleActivateCinema = async (id, currentStatus) => {
     try {
       const newStatus = !currentStatus;
-      await cinemaService.activateCinema(id);
+      await cinemaService.activateCinema(id, newStatus);
       setCinemas(
         cinemas.map((cinema) =>
           cinema.id === id ? { ...cinema, active: newStatus } : cinema
         )
       );
+      message.success(
+        `Rạp chiếu phim đã ${
+          newStatus ? "kích hoạt" : "vô hiệu hóa"
+        } thành công`
+      );
     } catch (error) {
-      console.error("Error activating cinema:", error);
+      console.error("Lỗi khi thay đổi trạng thái rạp chiếu phim:", error);
+      message.error(
+        `Không thể ${newStatus ? "kích hoạt" : "vô hiệu hóa"} rạp chiếu phim`
+      );
     }
   };
 
@@ -123,8 +135,10 @@ const CinemaManagement = () => {
   // Open form for create or update
   const showModal = async (id = null) => {
     setSelectedCinemaId(id);
+    setThumbnailFile(null);
+
     if (id) {
-      // Fetch cinema details to get the most up-to-date data including rooms
+      // Fetch cinema details to get the most up-to-date data
       try {
         setLoading(true);
         const response = await cinemaService.getCinemaById(id);
@@ -139,21 +153,14 @@ const CinemaManagement = () => {
               id: room.id,
               name: room.name,
               roomType: room.roomType,
-              seatCount: room.seatCount,
-              rowCount: room.rowCount,
             })) || [{}],
-            ticketPriceRequests: cinemaData.ticketPrices?.map((price) => ({
-              id: price.priceId,
-              dateType: price.dateType,
-              price: price.price,
-            })) || [
-              { dateType: "WEEKDAY", price: 0 },
-              { dateType: "WEEKEND", price: 0 },
-            ],
           });
         }
       } catch (error) {
-        console.error("Error fetching cinema details for edit:", error);
+        console.error(
+          "Lỗi khi lấy chi tiết rạp chiếu phim để chỉnh sửa:",
+          error
+        );
       } finally {
         setLoading(false);
       }
@@ -161,10 +168,6 @@ const CinemaManagement = () => {
       form.resetFields();
       form.setFieldsValue({
         roomRequestList: [{}],
-        ticketPriceRequests: [
-          { dateType: "WEEKDAY", price: 0 },
-          { dateType: "WEEKEND", price: 0 },
-        ],
       });
     }
     setIsModalVisible(true);
@@ -180,56 +183,65 @@ const CinemaManagement = () => {
         province: values.province,
         requestType: selectedCinemaId ? "UPDATE" : "CREATE",
         roomRequestList: values.roomRequestList.map((room) => ({
-          ...room,
           id: selectedCinemaId && room.id ? room.id : undefined,
+          name: room.name,
+          roomType: room.roomType,
           requestType: selectedCinemaId && room.id ? "UPDATE" : "CREATE",
         })),
-        ticketPriceRequests:
-          values.ticketPriceRequests?.map((price) => ({
-            ...price,
-            id: selectedCinemaId && price.id ? price.id : undefined,
-          })) || [],
       };
 
       if (selectedCinemaId) {
         requestBody.id = selectedCinemaId;
       }
 
-      await cinemaService.createCinema(requestBody);
+      await cinemaService.createCinema(requestBody, thumbnailFile);
+      message.success(
+        `${selectedCinemaId ? "Cập nhật" : "Tạo"} rạp chiếu phim thành công`
+      );
       fetchCinemas();
       setIsModalVisible(false);
     } catch (error) {
-      console.error("Error creating/updating cinema:", error);
+      console.error("Lỗi khi tạo/cập nhật rạp chiếu phim:", error);
+      message.error(
+        `Không thể ${selectedCinemaId ? "cập nhật" : "tạo"} rạp chiếu phim`
+      );
+    }
+  };
+
+  // Handle thumbnail upload
+  const handleThumbnailChange = (info) => {
+    if (info.file) {
+      setThumbnailFile(info.file.originFileObj);
     }
   };
 
   // Table columns configuration
   const columns = [
     { title: "ID", dataIndex: "id", key: "id" },
-    { title: "Cinema Name", dataIndex: "name", key: "name" },
-    { title: "Hotline", dataIndex: "hotline", key: "hotline" },
-    { title: "Address", dataIndex: "address", key: "address" },
-    { title: "Province", dataIndex: "province", key: "province" },
+    { title: "Tên rạp", dataIndex: "name", key: "name" },
+    { title: "Đường dây nóng", dataIndex: "hotline", key: "hotline" },
+    { title: "Địa chỉ", dataIndex: "address", key: "address" },
+    { title: "Tỉnh/Thành phố", dataIndex: "province", key: "province" },
     {
-      title: "Status",
+      title: "Trạng thái",
       key: "active",
       render: (_, record) => (
         <Space>
           <Badge
             status={record.active ? "success" : "error"}
-            text={record.active ? "Active" : "Inactive"}
+            text={record.active ? "Hoạt động" : "Không hoạt động"}
           />
           <Switch
             checked={record.active}
             onChange={() => handleActivateCinema(record.id, record.active)}
-            checkedChildren="On"
-            unCheckedChildren="Off"
+            checkedChildren="Bật"
+            unCheckedChildren="Tắt"
           />
         </Space>
       ),
     },
     {
-      title: "Actions",
+      title: "Thao tác",
       key: "actions",
       render: (_, record) => (
         <Space>
@@ -259,7 +271,7 @@ const CinemaManagement = () => {
           <Breadcrumb
             items={[
               { title: <HomeOutlined /> },
-              { title: "Cinema Management" },
+              { title: "Quản lý rạp chiếu phim" },
             ]}
           />
         </Col>
@@ -269,14 +281,14 @@ const CinemaManagement = () => {
             <Row gutter={[16, 16]}>
               <Col span={24} className="flex justify-between items-center">
                 <Title level={4} className="!mb-0">
-                  Cinema List
+                  Danh sách rạp chiếu phim
                 </Title>
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => showModal()}
                 >
-                  Add New
+                  Thêm mới
                 </Button>
               </Col>
 
@@ -284,7 +296,7 @@ const CinemaManagement = () => {
                 <Row gutter={[16, 16]} className="items-center">
                   <Col xs={24} sm={8} md={6}>
                     <Input
-                      placeholder="Search cinemas"
+                      placeholder="Tìm kiếm rạp chiếu phim"
                       prefix={<SearchOutlined />}
                       onChange={(e) => setSearchText(e.target.value)}
                       allowClear
@@ -292,18 +304,20 @@ const CinemaManagement = () => {
                   </Col>
                   <Col xs={24} sm={8} md={4}>
                     <Select
-                      placeholder="Filter by status"
+                      placeholder="Lọc theo trạng thái"
                       style={{ width: "100%" }}
                       onChange={(value) => setFilterActive(value)}
                       defaultValue="all"
                     >
-                      <Select.Option value="all">All</Select.Option>
-                      <Select.Option value="true">Active</Select.Option>
-                      <Select.Option value="false">Inactive</Select.Option>
+                      <Select.Option value="all">Tất cả</Select.Option>
+                      <Select.Option value="true">Hoạt động</Select.Option>
+                      <Select.Option value="false">
+                        Không hoạt động
+                      </Select.Option>
                     </Select>
                   </Col>
                   <Col>
-                    <Tooltip title="Refresh data">
+                    <Tooltip title="Làm mới dữ liệu">
                       <Button
                         icon={<ReloadOutlined />}
                         onClick={fetchCinemas}
@@ -323,10 +337,10 @@ const CinemaManagement = () => {
                     total: filteredCinemas.length,
                     pageSize: 10,
                     showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} cinemas`,
+                    showTotal: (total) => `Tổng ${total} rạp chiếu phim`,
                   }}
                   scroll={{ x: "max-content" }}
-                  locale={{ emptyText: "No cinema data" }}
+                  locale={{ emptyText: "Không có dữ liệu rạp chiếu phim" }}
                 />
               </Col>
             </Row>
@@ -336,10 +350,15 @@ const CinemaManagement = () => {
 
       {/* Create/Update Cinema Modal */}
       <Modal
-        title={selectedCinemaId ? "Update Cinema" : "Add New Cinema"}
+        title={
+          selectedCinemaId
+            ? "Cập nhật rạp chiếu phim"
+            : "Thêm rạp chiếu phim mới"
+        }
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
+        width={700}
       >
         <Form
           form={form}
@@ -348,34 +367,62 @@ const CinemaManagement = () => {
           initialValues={{ roomRequestList: [{}] }}
         >
           <Form.Item
-            label="Cinema Name"
+            label="Tên rạp"
             name="name"
-            rules={[{ required: true, message: "Please enter cinema name!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập tên rạp!" }]}
           >
-            <Input placeholder="Enter cinema name" />
-          </Form.Item>
-          <Form.Item
-            label="Hotline"
-            name="hotline"
-            rules={[{ required: true, message: "Please enter hotline!" }]}
-          >
-            <Input placeholder="Enter hotline" />
-          </Form.Item>
-          <Form.Item
-            label="Address"
-            name="address"
-            rules={[{ required: true, message: "Please enter address!" }]}
-          >
-            <Input placeholder="Enter address" />
-          </Form.Item>
-          <Form.Item
-            label="Province"
-            name="province"
-            rules={[{ required: true, message: "Please enter province!" }]}
-          >
-            <Input placeholder="Enter province" />
+            <Input placeholder="Nhập tên rạp" />
           </Form.Item>
 
+          <Form.Item
+            label="Đường dây nóng"
+            name="hotline"
+            rules={[
+              { required: true, message: "Vui lòng nhập đường dây nóng!" },
+            ]}
+          >
+            <Input placeholder="Nhập đường dây nóng" />
+          </Form.Item>
+
+          <Form.Item
+            label="Địa chỉ"
+            name="address"
+            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+          >
+            <Input placeholder="Nhập địa chỉ" />
+          </Form.Item>
+
+          <Form.Item
+            label="Tỉnh/Thành phố"
+            name="province"
+            rules={[
+              { required: true, message: "Vui lòng nhập tỉnh/thành phố!" },
+            ]}
+          >
+            <Input placeholder="Nhập tỉnh/thành phố" />
+          </Form.Item>
+
+          <Form.Item
+            label="Hình ảnh"
+            name="thumbnail"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => {
+              if (Array.isArray(e)) return e;
+              return e?.fileList;
+            }}
+          >
+            <Upload
+              beforeUpload={() => false}
+              maxCount={1}
+              listType="picture"
+              onChange={handleThumbnailChange}
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />}>Tải lên hình ảnh</Button>
+            </Upload>
+          </Form.Item>
+
+          <h3 className="mt-4 mb-2">Thông tin phòng</h3>
           <Form.List name="roomRequestList">
             {(fields, { add, remove }) => (
               <>
@@ -387,54 +434,41 @@ const CinemaManagement = () => {
                   >
                     <Form.Item
                       {...field}
-                      label="Room Name"
+                      label="Tên phòng"
                       name={[field.name, "name"]}
                       rules={[
-                        { required: true, message: "Please enter room name!" },
+                        { required: true, message: "Vui lòng nhập tên phòng!" },
                       ]}
                     >
-                      <Input placeholder="Enter room name" />
+                      <Input placeholder="Nhập tên phòng" />
                     </Form.Item>
+
                     <Form.Item
                       {...field}
-                      label="Room Type"
+                      label="Loại phòng"
                       name={[field.name, "roomType"]}
                       rules={[
-                        { required: true, message: "Please select room type!" },
+                        {
+                          required: true,
+                          message: "Vui lòng chọn loại phòng!",
+                        },
                       ]}
                     >
-                      <Select placeholder="Select type">
-                        <Select.Option value="STANDARD">Standard</Select.Option>
+                      <Select placeholder="Chọn loại">
+                        <Select.Option value="STANDARD">
+                          Tiêu chuẩn
+                        </Select.Option>
                         <Select.Option value="VIP">VIP</Select.Option>
                         <Select.Option value="IMAX">IMAX</Select.Option>
                       </Select>
                     </Form.Item>
-                    <Form.Item
-                      {...field}
-                      label="Seat Count"
-                      name={[field.name, "seatCount"]}
-                      rules={[
-                        { required: true, message: "Please enter seat count!" },
-                      ]}
-                    >
-                      <Input type="number" placeholder="Enter seat count" />
-                    </Form.Item>
-                    <Form.Item
-                      {...field}
-                      label="Row Count"
-                      name={[field.name, "rowCount"]}
-                      rules={[
-                        { required: true, message: "Please enter row count!" },
-                      ]}
-                    >
-                      <Input type="number" placeholder="Enter row count" />
-                    </Form.Item>
+
                     <Button
-                      type="danger"
+                      danger
                       onClick={() => remove(field.name)}
                       icon={<MinusCircleOutlined />}
                     >
-                      Remove
+                      Xóa
                     </Button>
                   </Space>
                 ))}
@@ -445,83 +479,16 @@ const CinemaManagement = () => {
                     block
                     icon={<PlusOutlined />}
                   >
-                    Add Room
+                    Thêm phòng
                   </Button>
                 </Form.Item>
               </>
             )}
           </Form.List>
 
-          <h3 className="mt-4 mb-2">Giá vé</h3>
-          <Form.List name="ticketPriceRequests">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map((field) => (
-                  <Space
-                    key={field.key}
-                    style={{ display: "flex", marginBottom: 8 }}
-                    align="baseline"
-                  >
-                    <Form.Item
-                      {...field}
-                      label="Loại ngày"
-                      name={[field.name, "dateType"]}
-                      rules={[
-                        { required: true, message: "Vui lòng chọn loại ngày!" },
-                      ]}
-                    >
-                      <Select placeholder="Chọn loại ngày">
-                        <Select.Option value="WEEKDAY">
-                          Ngày thường
-                        </Select.Option>
-                        <Select.Option value="WEEKEND">Cuối tuần</Select.Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item
-                      {...field}
-                      label="Giá vé"
-                      name={[field.name, "price"]}
-                      rules={[
-                        { required: true, message: "Vui lòng nhập giá vé!" },
-                      ]}
-                    >
-                      <Input
-                        type="number"
-                        prefix={<DollarOutlined />}
-                        placeholder="Nhập giá vé"
-                        addonAfter="VND"
-                      />
-                    </Form.Item>
-                    {fields.length > 1 && (
-                      <Button
-                        type="danger"
-                        onClick={() => remove(field.name)}
-                        icon={<MinusCircleOutlined />}
-                      >
-                        Xóa
-                      </Button>
-                    )}
-                  </Space>
-                ))}
-                {fields.length < 2 && (
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      block
-                      icon={<PlusOutlined />}
-                    >
-                      Thêm giá vé
-                    </Button>
-                  </Form.Item>
-                )}
-              </>
-            )}
-          </Form.List>
-
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
-              {selectedCinemaId ? "Update" : "Create"}
+              {selectedCinemaId ? "Cập nhật" : "Tạo mới"}
             </Button>
           </Form.Item>
         </Form>
@@ -557,6 +524,19 @@ const CinemaManagement = () => {
           cinemaDetails && (
             <Tabs defaultActiveKey="info">
               <Tabs.TabPane tab="Thông tin chung" key="info">
+                {cinemaDetails.imageUrl && (
+                  <div className="mb-4 text-center">
+                    <img
+                      src={cinemaDetails.imageUrl}
+                      alt={cinemaDetails.name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </div>
+                )}
                 <Descriptions bordered column={1}>
                   <Descriptions.Item label="ID">
                     {cinemaDetails.id}
@@ -564,7 +544,7 @@ const CinemaManagement = () => {
                   <Descriptions.Item label="Tên rạp">
                     {cinemaDetails.name}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Hotline">
+                  <Descriptions.Item label="Đường dây nóng">
                     {cinemaDetails.hotline}
                   </Descriptions.Item>
                   <Descriptions.Item label="Địa chỉ">
@@ -623,7 +603,7 @@ const CinemaManagement = () => {
                               </Tag>
                             </Col>
                             <Col span={8}>
-                              <strong>Số ghế:</strong> {room.seatCount}
+                              <strong>Số cột:</strong> {room.columnCount}
                             </Col>
                             <Col span={8}>
                               <strong>Số hàng:</strong> {room.rowCount}
@@ -647,46 +627,44 @@ const CinemaManagement = () => {
                 )}
               </Tabs.TabPane>
 
-              <Tabs.TabPane tab="Giá vé" key="prices">
-                {cinemaDetails.ticketPrices &&
-                cinemaDetails.ticketPrices.length > 0 ? (
-                  <List
-                    itemLayout="horizontal"
-                    dataSource={cinemaDetails.ticketPrices}
-                    renderItem={(price) => (
-                      <List.Item>
-                        <Card style={{ width: "100%" }}>
-                          <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                              <strong>Loại ngày:</strong>{" "}
-                              <Tag
-                                color={
-                                  price.dateType === "WEEKEND"
-                                    ? "orange"
-                                    : "blue"
-                                }
-                              >
-                                {price.dateType === "WEEKEND"
-                                  ? "Cuối tuần"
-                                  : "Ngày thường"}
-                              </Tag>
-                            </Col>
-                            <Col span={12}>
-                              <strong>Giá vé:</strong>{" "}
-                              {new Intl.NumberFormat("vi-VN", {
-                                style: "currency",
-                                currency: "VND",
-                              }).format(price.price)}
-                            </Col>
-                          </Row>
-                        </Card>
-                      </List.Item>
-                    )}
-                  />
-                ) : (
-                  <Empty description="Không có thông tin giá vé" />
+              {cinemaDetails.ticketPrices &&
+                cinemaDetails.ticketPrices.length > 0 && (
+                  <Tabs.TabPane tab="Giá vé" key="prices">
+                    <List
+                      itemLayout="horizontal"
+                      dataSource={cinemaDetails.ticketPrices}
+                      renderItem={(price) => (
+                        <List.Item>
+                          <Card style={{ width: "100%" }}>
+                            <Row gutter={[16, 16]}>
+                              <Col span={12}>
+                                <strong>Loại ngày:</strong>{" "}
+                                <Tag
+                                  color={
+                                    price.dateType === "WEEKEND"
+                                      ? "orange"
+                                      : "blue"
+                                  }
+                                >
+                                  {price.dateType === "WEEKEND"
+                                    ? "Cuối tuần"
+                                    : "Ngày thường"}
+                                </Tag>
+                              </Col>
+                              <Col span={12}>
+                                <strong>Giá vé:</strong>{" "}
+                                {new Intl.NumberFormat("vi-VN", {
+                                  style: "currency",
+                                  currency: "VND",
+                                }).format(price.price)}
+                              </Col>
+                            </Row>
+                          </Card>
+                        </List.Item>
+                      )}
+                    />
+                  </Tabs.TabPane>
                 )}
-              </Tabs.TabPane>
             </Tabs>
           )
         )}
