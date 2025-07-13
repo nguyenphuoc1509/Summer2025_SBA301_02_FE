@@ -1,10 +1,21 @@
 import { instance } from "../instance";
 
 export const authService = {
-  login: async (identifier, password) => {
+  login: async (email, password) => {
     try {
       const response = await instance.post("/auth/login", {
-        identifier,
+        identifier: email,
+        password,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+  loginAdmin: async (username, password) => {
+    try {
+      const response = await instance.post("/auth/login", {
+        identifier: username,
         password,
       });
       return response;

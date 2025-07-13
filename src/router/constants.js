@@ -12,6 +12,11 @@ export const ROUTES = {
   TICKET: "/mua-ve",
   EVENT: "/uu-dai",
   EVENT_DETAIL: "/uu-dai/:slug",
+  CHOOSE_SEAT: "/choose-seat/:showtimeId",
+  PAYMENT: "/payment",
+  PAYMENT_SUCCESS: "/payments/success",
+  CONFIRM: "/confirm",
+  VNPAY_CALLBACK: "/api/payments/vnpay/callback",
 
   // Private routes
   PROFILE: "/thong-tin-ca-nhan",

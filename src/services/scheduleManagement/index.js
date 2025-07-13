@@ -12,7 +12,7 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 
@@ -27,7 +27,7 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 
@@ -49,7 +49,7 @@ const scheduleService = {
       );
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 
@@ -62,7 +62,7 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 
@@ -75,7 +75,7 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 
@@ -90,7 +90,7 @@ const scheduleService = {
       });
       return response?.result?.roomResponseList || [];
     } catch (error) {
-      throw error.response?.data || error.message;
+      throw error.response || error.message;
     }
   },
 };

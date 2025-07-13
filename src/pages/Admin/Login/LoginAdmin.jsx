@@ -20,7 +20,7 @@ const LoginAdmin = () => {
     setIsLoading(true);
 
     try {
-      const response = await authService.login(
+      const response = await authService.loginAdmin(
         values.username,
         values.password
       );

@@ -87,32 +87,45 @@ const ScheduleManagement = () => {
       );
       console.log("Cinema schedules response:", schedulesResponse);
 
-      // Process the cinema showtimes response
-      const schedulesData = schedulesResponse?.result || [];
+      // Process the cinema showtimes response with the new format
+      const moviesWithShowtimes = schedulesResponse?.result || [];
 
-      // Check if the response is already in the format we need or needs transformation
-      const processedSchedules = Array.isArray(schedulesData)
-        ? schedulesData.map((schedule) => ({
-            id: schedule.id || schedule.showTimeId,
-            movieId: schedule.movieId,
-            movieTitle:
-              schedule.movieTitle ||
-              movies.find((m) => m.id === schedule.movieId)?.title ||
-              "Unknown Movie",
-            cinemaId: schedule.cinemaId || cinemaId,
+      // Transform the data into our flat schedule format
+      const processedSchedules = [];
+
+      moviesWithShowtimes.forEach((movie) => {
+        const {
+          movieId,
+          movieName,
+          moviePosterUrl,
+          movieDuration,
+          movieRating,
+          movieReleaseDate,
+          showTimes,
+        } = movie;
+
+        showTimes.forEach((showtime) => {
+          processedSchedules.push({
+            id: showtime.showTimeId,
+            movieId: movieId,
+            movieTitle: movieName,
+            moviePoster: moviePosterUrl,
+            movieDuration: movieDuration,
+            movieRating: movieRating,
+            movieReleaseDate: movieReleaseDate,
+            cinemaId: cinemaId,
             cinemaName:
-              schedule.cinemaName ||
-              cinemas.find((c) => c.id === cinemaId)?.name ||
-              "Unknown Cinema",
-            roomId: schedule.roomId,
-            roomName: schedule.roomName || `Phòng ${schedule.roomId}`,
-            showtime: schedule.showtime || schedule.showTime,
-            showDate:
-              schedule.showDate || schedule.showTime || schedule.showtime,
-            ticketPrice: schedule.ticketPrice || 0,
-            active: schedule.active !== undefined ? schedule.active : true,
-          }))
-        : [];
+              cinemas.find((c) => c.id === cinemaId)?.name || "Unknown Cinema",
+            roomId: showtime.roomId,
+            roomName: `Phòng ${showtime.roomId}`,
+            roomType: showtime.roomType,
+            showtime: showtime.showTime,
+            showDate: showtime.showTime,
+            ticketPrice: 0, // Default value as it's not in the response
+            active: true, // Assuming active if returned in results
+          });
+        });
+      });
 
       console.log("Processed cinema schedules:", processedSchedules);
       setSchedules(processedSchedules);
@@ -240,6 +253,11 @@ const ScheduleManagement = () => {
       key: "roomName",
     },
     {
+      title: "Loại phòng",
+      dataIndex: "roomType",
+      key: "roomType",
+    },
+    {
       title: "Ngày chiếu",
       dataIndex: "showDate",
       key: "showDate",
@@ -251,23 +269,6 @@ const ScheduleManagement = () => {
       dataIndex: "showtime",
       key: "showtime",
       render: (time) => dayjs(time).format("HH:mm"),
-    },
-    {
-      title: "Giá vé (VNĐ)",
-      dataIndex: "ticketPrice",
-      key: "ticketPrice",
-      sorter: (a, b) => a.ticketPrice - b.ticketPrice,
-      render: (price) => `${price.toLocaleString("vi-VN")} VNĐ`,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "active",
-      key: "active",
-      render: (active) => (
-        <Tag color={active ? "green" : "red"}>
-          {active ? "Đang chiếu" : "Ngừng chiếu"}
-        </Tag>
-      ),
     },
     {
       title: "Thao tác",
@@ -388,32 +389,46 @@ const ScheduleManagement = () => {
         );
         console.log("Refreshed cinema schedules response:", schedulesResponse);
 
-        // Process the cinema showtimes response
-        const schedulesData = schedulesResponse?.result || [];
+        // Process the cinema showtimes response with the new format
+        const moviesWithShowtimes = schedulesResponse?.result || [];
 
-        // Check if the response is already in the format we need or needs transformation
-        const processedSchedules = Array.isArray(schedulesData)
-          ? schedulesData.map((schedule) => ({
-              id: schedule.id || schedule.showTimeId,
-              movieId: schedule.movieId,
-              movieTitle:
-                schedule.movieTitle ||
-                movies.find((m) => m.id === schedule.movieId)?.title ||
-                "Unknown Movie",
-              cinemaId: schedule.cinemaId || selectedCinema,
+        // Transform the data into our flat schedule format
+        const processedSchedules = [];
+
+        moviesWithShowtimes.forEach((movie) => {
+          const {
+            movieId,
+            movieName,
+            moviePosterUrl,
+            movieDuration,
+            movieRating,
+            movieReleaseDate,
+            showTimes,
+          } = movie;
+
+          showTimes.forEach((showtime) => {
+            processedSchedules.push({
+              id: showtime.showTimeId,
+              movieId: movieId,
+              movieTitle: movieName,
+              moviePoster: moviePosterUrl,
+              movieDuration: movieDuration,
+              movieRating: movieRating,
+              movieReleaseDate: movieReleaseDate,
+              cinemaId: selectedCinema,
               cinemaName:
-                schedule.cinemaName ||
                 cinemas.find((c) => c.id === selectedCinema)?.name ||
                 "Unknown Cinema",
-              roomId: schedule.roomId,
-              roomName: schedule.roomName || `Phòng ${schedule.roomId}`,
-              showtime: schedule.showtime || schedule.showTime,
-              showDate:
-                schedule.showDate || schedule.showTime || schedule.showtime,
-              ticketPrice: schedule.ticketPrice || 0,
-              active: schedule.active !== undefined ? schedule.active : true,
-            }))
-          : [];
+              roomId: showtime.roomId,
+              roomName: `Phòng ${showtime.roomId}`,
+              roomType: showtime.roomType,
+              showtime: showtime.showTime,
+              showDate: showtime.showTime,
+              ticketPrice: 0, // Default value as it's not in the response
+              active: true, // Assuming active if returned in results
+            });
+          });
+        });
 
         setSchedules(processedSchedules);
       } else if (activeTab === "movie" && selectedMovie) {

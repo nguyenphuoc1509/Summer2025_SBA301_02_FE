@@ -15,6 +15,11 @@ import { AuthLayout } from "../layouts/AuthLayout";
 import Ticket from "../../pages/Customer/Ticket/Ticket";
 import Event from "../../pages/Customer/Event/Event";
 import EventDetail from "../../pages/Customer/Event/EventDetail";
+import ChooseSeat from "../../pages/Customer/Ticket/ChooseSeat";
+import Payment from "../../pages/Customer/Ticket/Payment";
+import Confirm from "../../pages/Customer/Ticket/Confirm";
+import VNPayCallback from "../../pages/Customer/Ticket/VNPayCallback";
+import PaymentSuccess from "../../pages/Customer/Ticket/PaymentSuccess";
 
 export const PublicRoutes = [
   {
@@ -80,6 +85,31 @@ export const PublicRoutes = [
   {
     path: ROUTES.EVENT_DETAIL,
     element: <EventDetail />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.CHOOSE_SEAT,
+    element: <ChooseSeat />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.PAYMENT,
+    element: <Payment />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.PAYMENT_SUCCESS,
+    element: <PaymentSuccess />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.CONFIRM,
+    element: <Confirm />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.VNPAY_CALLBACK,
+    element: <VNPayCallback />,
     layout: MainLayout,
   },
 ];

@@ -11,11 +11,18 @@ import {
   Tag,
   Select,
   Upload,
+  Descriptions,
+  Image,
+  Typography,
+  Divider,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
   UploadOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { movieService } from "../../../services/movieManagement/movieService";
 import { countryService } from "../../../services/countryManagement/countryService";
@@ -35,6 +42,9 @@ const MovieManagement = () => {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  const [movieDetails, setMovieDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     fetchMovies();
@@ -115,6 +125,20 @@ const MovieManagement = () => {
     }
   };
 
+  const fetchMovieDetails = async (id) => {
+    setLoadingDetails(true);
+    try {
+      const response = await movieService.getMovieById(id);
+      setMovieDetails(response.result);
+      setIsDetailsModalVisible(true);
+    } catch (error) {
+      message.error("Failed to fetch movie details.");
+      console.error("Error fetching movie details:", error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const columns = [
     {
       title: "Mã phim",
@@ -188,7 +212,7 @@ const MovieManagement = () => {
       dataIndex: "movieStatus",
       key: "movieStatus",
       render: (status) => (
-        <Tag color={status === "RELEASED" ? "green" : "red"}>
+        <Tag color={status === "NOW_SHOWING" ? "green" : "red"}>
           {(status || "UNKNOWN").toUpperCase()}
         </Tag>
       ),
@@ -198,6 +222,13 @@ const MovieManagement = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
+          <Button
+            type="primary"
+            icon={<InfoCircleOutlined />}
+            onClick={() => fetchMovieDetails(record.id)}
+          >
+            Chi tiết
+          </Button>
           <Button type="primary" onClick={() => handleEdit(record)}>
             Sửa
           </Button>
@@ -591,7 +622,7 @@ const MovieManagement = () => {
             >
               <Select>
                 <Select.Option value="UPCOMING">Sắp chiếu</Select.Option>
-                <Select.Option value="RELEASED">Đang chiếu</Select.Option>
+                <Select.Option value="NOW_SHOWING">Đang chiếu</Select.Option>
               </Select>
             </Form.Item>
           </div>
@@ -730,6 +761,168 @@ const MovieManagement = () => {
             </div>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Chi tiết phim"
+        open={isDetailsModalVisible}
+        onCancel={() => setIsDetailsModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setIsDetailsModalVisible(false)}>
+            Đóng
+          </Button>,
+          <Button
+            key="edit"
+            type="primary"
+            onClick={() => {
+              setIsDetailsModalVisible(false);
+              handleEdit(movieDetails);
+            }}
+          >
+            Sửa
+          </Button>,
+        ]}
+        width={800}
+      >
+        {loadingDetails ? (
+          <p>Đang tải thông tin phim...</p>
+        ) : movieDetails ? (
+          <div>
+            <Row gutter={16}>
+              <Col span={8}>
+                {movieDetails.thumbnailUrl && (
+                  <Image
+                    src={movieDetails.thumbnailUrl}
+                    alt={movieDetails.title}
+                    style={{ width: "100%", borderRadius: "8px" }}
+                  />
+                )}
+              </Col>
+              <Col span={16}>
+                <Typography.Title level={3}>
+                  {movieDetails.title}
+                </Typography.Title>
+
+                <Descriptions bordered column={1}>
+                  <Descriptions.Item label="Mã phim">
+                    {movieDetails.id}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Thời lượng">
+                    {movieDetails.duration} phút
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày phát hành">
+                    {movieDetails.releaseDate}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày khởi chiếu">
+                    {movieDetails.premiereDate}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày kết thúc">
+                    {movieDetails.endDate}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Giới hạn tuổi">
+                    {movieDetails.ageRestriction === "T0"
+                      ? "0+"
+                      : movieDetails.ageRestriction === "T13"
+                      ? "13+"
+                      : movieDetails.ageRestriction === "T16"
+                      ? "16+"
+                      : movieDetails.ageRestriction === "T18"
+                      ? "18+"
+                      : "Không xác định"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái">
+                    <Tag
+                      color={
+                        movieDetails.movieStatus === "RELEASED"
+                          ? "green"
+                          : "orange"
+                      }
+                    >
+                      {movieDetails.movieStatus === "RELEASED"
+                        ? "Đang chiếu"
+                        : "Sắp chiếu"}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            <Typography.Title level={4}>Mô tả</Typography.Title>
+            <Typography.Paragraph>
+              {movieDetails.description}
+            </Typography.Paragraph>
+
+            <Divider />
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Typography.Title level={4}>Thông tin chung</Typography.Title>
+                <Descriptions bordered column={1}>
+                  <Descriptions.Item label="Quốc gia">
+                    {movieDetails.country?.name || "Không xác định"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Định dạng">
+                    {movieDetails.availableFormats?.map((format) => (
+                      <Tag key={format} color="blue">
+                        {format === "TWO_D"
+                          ? "2D"
+                          : format === "THREE_D"
+                          ? "3D"
+                          : format === "IMAX"
+                          ? "IMAX"
+                          : format}
+                      </Tag>
+                    ))}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Thể loại">
+                    {movieDetails.genres?.map((genre) => (
+                      <Tag key={genre.id} color="green">
+                        {genre.name}
+                      </Tag>
+                    ))}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Col>
+              <Col span={12}>
+                <Typography.Title level={4}>Nhân sự</Typography.Title>
+                <Descriptions bordered column={1}>
+                  <Descriptions.Item label="Đạo diễn">
+                    {movieDetails.directors
+                      ?.map((director) => director.name)
+                      .join(", ") || "Không xác định"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Diễn viên">
+                    {movieDetails.actors
+                      ?.map((actor) => actor.name)
+                      .join(", ") || "Không xác định"}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Col>
+            </Row>
+
+            {movieDetails.trailerUrl && (
+              <>
+                <Divider />
+                <Typography.Title level={4}>Trailer</Typography.Title>
+                <div style={{ textAlign: "center" }}>
+                  <iframe
+                    width="560"
+                    height="315"
+                    src={movieDetails.trailerUrl.replace("watch?v=", "embed/")}
+                    title="Movie Trailer"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <p>Không tìm thấy thông tin phim.</p>
+        )}
       </Modal>
     </div>
   );

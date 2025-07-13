@@ -22,9 +22,10 @@ const cinemaService = {
   // Lấy danh sách tất cả rạp chiếu phim
   getAllCinemas: async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await instance.get("cinemas", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       return response;
