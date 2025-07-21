@@ -20,6 +20,7 @@ import Payment from "../../pages/Customer/Ticket/Payment";
 import Confirm from "../../pages/Customer/Ticket/Confirm";
 import VNPayCallback from "../../pages/Customer/Ticket/VNPayCallback";
 import PaymentSuccess from "../../pages/Customer/Ticket/PaymentSuccess";
+import CinemaSystem from "../../pages/Customer/Cinema/CinemaSystem";
 
 export const PublicRoutes = [
   {
@@ -110,6 +111,11 @@ export const PublicRoutes = [
   {
     path: ROUTES.VNPAY_CALLBACK,
     element: <VNPayCallback />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.CINEMA_SYSTEM,
+    element: <CinemaSystem />,
     layout: MainLayout,
   },
 ];

@@ -33,6 +33,14 @@ const cinemaService = {
       throw error.response?.data || error.message;
     }
   },
+  getAllCinemasCustomer: async () => {
+    try {
+      const response = await instance.get("cinemas/customer");
+      return response;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 
   // Tạo mới rạp chiếu phim
   createCinema: async (cinamaData, thumbnailFile) => {

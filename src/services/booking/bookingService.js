@@ -101,6 +101,28 @@ const bookingService = {
       throw error.response || error.message;
     }
   },
+
+  // Đặt vé offline cho admin/manager
+  bookSeatsOffline: async (cinemaId, customerId, showtimeId, seatCodes) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await instance.post(
+        `/bookings/manager/${cinemaId}/book?customerId=${customerId}`,
+        {
+          showtimeId,
+          seatCodes,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response;
+    } catch (error) {
+      throw error.response || error.message;
+    }
+  },
 };
 
 export default bookingService;

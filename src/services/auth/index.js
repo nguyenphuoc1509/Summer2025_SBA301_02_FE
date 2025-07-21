@@ -31,4 +31,27 @@ export const authService = {
       throw error;
     }
   },
+  confirmOTP: async (email, otp, type) => {
+    try {
+      const response = await instance.post("/auth/confirm-otp", {
+        email,
+        otp,
+        type,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+  resendOTP: async (email, otpType) => {
+    try {
+      const response = await instance.post("/auth/resend-otp", {
+        email,
+        otpType,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

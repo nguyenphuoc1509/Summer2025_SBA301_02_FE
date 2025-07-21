@@ -21,17 +21,9 @@ const menuOptions = {
     { label: "Thể lọai phim", href: "/dien-anh" },
     { label: "Diễn viên", href: "/dien-vien" },
     { label: "Đạo diễn", href: "/dao-dien" },
-    { label: "Bình luận phim", href: "/binh-luan-phim" },
-    { label: "Blog điện ảnh", href: "/blog-dien-anh" },
   ],
-  "Sự Kiện": [
-    { label: "Ưu đãi", href: "/uu-dai" },
-    { label: "Sự kiện đặc biệt", href: "/su-kien-dac-biet" },
-  ],
-  "Rạp/Giá Vé": [
-    { label: "Hệ thống rạp", href: "/he-thong-rap" },
-    { label: "Bảng giá vé", href: "/bang-gia-ve" },
-  ],
+  "Sự Kiện": [{ label: "Ưu đãi", href: "/uu-dai" }],
+  "Rạp/Giá Vé": [{ label: "Hệ thống rạp", href: "/he-thong-rap" }],
 };
 
 const Header = () => {
@@ -77,20 +69,12 @@ const Header = () => {
       <Link to="/" className="flex items-center gap-2 group">
         <span className="font-bold text-2xl md:text-3xl tracking-tight">
           <span className="text-orange-500 group-hover:text-orange-600 transition-colors duration-200">
-            Galaxy
+            GalaX
           </span>
           <span className="text-blue-500 group-hover:text-blue-600 transition-colors duration-200">
             Cinema
           </span>
         </span>
-      </Link>
-
-      {/* Mua Vé Button */}
-      <Link to="/mua-ve" className="hidden md:block">
-        <img
-          src="https://www.galaxycine.vn/_next/static/media/btn-ticket.42d72c96.webp"
-          className="w-[112px] h-9"
-        />
       </Link>
 
       {/* Desktop Menu - Only visible on large screens */}

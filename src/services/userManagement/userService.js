@@ -87,4 +87,23 @@ export const userService = {
       throw error;
     }
   },
+
+  // Tạo nhanh tài khoản khách hàng
+  quickCreateCustomer: async (email, fullName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await instance.post(
+        "/users/quick-customers",
+        { email, fullName },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response;
+    } catch (error) {
+      throw error.response || error.message;
+    }
+  },
 };

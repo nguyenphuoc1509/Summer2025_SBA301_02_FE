@@ -2,11 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/auth";
+import OTPModal from "./OTPModal";
 
-const illustration = "https://cdn-icons-png.flaticon.com/512/616/616408.png"; // Hoặc thay bằng ảnh local nếu có
+const illustration = "https://cdn-icons-png.flaticon.com/512/616/616408.png";
 
 const LoginPopup = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpType, setOtpType] = useState("REGISTER");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [pendingLoginData, setPendingLoginData] = useState(null);
 
   // State cho login
   const [email, setEmail] = useState("");
@@ -44,16 +49,28 @@ const LoginPopup = ({ onClose }) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+
     try {
       const response = await authService.login(email, password);
+
       if (response.code === 200) {
-        const userData = {
-          token: response.result.accessToken,
-        };
-        localStorage.setItem("token", userData.token);
-        login(userData);
-        handleClose();
-        window.location.reload();
+        // Kiểm tra xem có cần OTP không
+        if (response.result.requireOTP) {
+          // Cần OTP - hiển thị modal OTP cho đăng nhập
+          setPendingEmail(email);
+          setPendingLoginData(response.result);
+          setOtpType("LOGIN");
+          setShowOTPModal(true);
+        } else {
+          // Không cần OTP - đăng nhập thành công
+          const userData = {
+            token: response.result.accessToken,
+          };
+          localStorage.setItem("token", userData.token);
+          login(userData);
+          handleClose();
+          window.location.reload();
+        }
       } else {
         setError(response.message || "Đăng nhập thất bại. Vui lòng thử lại!");
       }
@@ -72,19 +89,24 @@ const LoginPopup = ({ onClose }) => {
     setError("");
     setSuccess("");
     setIsLoading(true);
+
     try {
-      await authService.register({
+      const response = await authService.register({
         fullName,
         email: regEmail,
         gender,
         birthDate,
         password: regPassword,
       });
-      setSuccess("Đăng ký thành công! Bạn có thể đăng nhập.");
-      setTimeout(() => {
-        setIsLogin(true);
-        setSuccess("");
-      }, 1500);
+
+      if (response.code === 200) {
+        // Thành công - hiển thị modal OTP cho đăng ký
+        setPendingEmail(regEmail);
+        setOtpType("REGISTER");
+        setShowOTPModal(true);
+      } else {
+        setError(response.message || "Đăng ký thất bại. Vui lòng thử lại!");
+      }
     } catch (error) {
       setError(
         error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!"
@@ -93,6 +115,65 @@ const LoginPopup = ({ onClose }) => {
       setIsLoading(false);
     }
   };
+
+  // Xử lý khi OTP đăng ký thành công - CHUYỂN THẲNG VỀ LOGIN
+  const handleRegisterOTPSuccess = () => {
+    setShowOTPModal(false);
+    setSuccess("Đăng ký và xác thực thành công! Vui lòng đăng nhập.");
+
+    // Chuyển về form đăng nhập ngay lập tức
+    setIsLogin(true);
+
+    // Reset form đăng ký
+    setFullName("");
+    setRegEmail("");
+    setGender("MALE");
+    setBirthDate("");
+    setRegPassword("");
+
+    // Xóa success message sau 3 giây
+    setTimeout(() => {
+      setSuccess("");
+    }, 3000);
+  };
+
+  // Xử lý khi OTP đăng nhập thành công
+  const handleLoginOTPSuccess = (otpResponse) => {
+    const userData = {
+      token: otpResponse.result.accessToken,
+    };
+    localStorage.setItem("token", userData.token);
+    login(userData);
+    setShowOTPModal(false);
+    handleClose();
+    window.location.reload();
+  };
+
+  const handleOTPSuccess = (response) => {
+    if (otpType === "REGISTER") {
+      handleRegisterOTPSuccess();
+    } else if (otpType === "LOGIN") {
+      handleLoginOTPSuccess(response);
+    }
+  };
+
+  const handleOTPClose = () => {
+    setShowOTPModal(false);
+    setPendingEmail("");
+    setPendingLoginData(null);
+  };
+
+  // Hiển thị modal OTP nếu cần
+  if (showOTPModal) {
+    return (
+      <OTPModal
+        email={pendingEmail}
+        onClose={handleOTPClose}
+        onSuccess={handleOTPSuccess}
+        otpType={otpType}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -110,6 +191,7 @@ const LoginPopup = ({ onClose }) => {
         >
           &times;
         </button>
+
         {/* Hình minh họa */}
         <div className="flex justify-center mb-4">
           <img
@@ -118,6 +200,7 @@ const LoginPopup = ({ onClose }) => {
             className="w-20 h-20 object-contain"
           />
         </div>
+
         {isLogin ? (
           <>
             <h2 className="text-xl font-bold text-center mb-6">
@@ -158,6 +241,11 @@ const LoginPopup = ({ onClose }) => {
               </div>
               {error && (
                 <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
+              {success && (
+                <div className="text-green-600 text-sm text-center">
+                  {success}
+                </div>
               )}
               <button
                 type="submit"

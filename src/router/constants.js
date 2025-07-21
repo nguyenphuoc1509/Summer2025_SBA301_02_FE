@@ -17,6 +17,7 @@ export const ROUTES = {
   PAYMENT_SUCCESS: "/payments/success",
   CONFIRM: "/confirm",
   VNPAY_CALLBACK: "/api/payments/vnpay/callback",
+  CINEMA_SYSTEM: "/he-thong-rap",
 
   // Private routes
   PROFILE: "/thong-tin-ca-nhan",

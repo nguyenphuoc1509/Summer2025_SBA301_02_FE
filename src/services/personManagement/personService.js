@@ -11,7 +11,7 @@ export const personService = {
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 
@@ -26,7 +26,7 @@ export const personService = {
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 
@@ -40,35 +40,65 @@ export const personService = {
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 
-  createPerson: async (data) => {
+  createPerson: async (personData, imageFiles) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await instance.post("persons", data, {
+      const formData = new FormData();
+
+      // Tạo Blob cho person data giống như cinema
+      const personBlob = new Blob([JSON.stringify(personData)], {
+        type: "application/json",
+      });
+      formData.append("person", personBlob);
+
+      // Add image files
+      if (imageFiles && imageFiles.length > 0) {
+        imageFiles.forEach((file, index) => {
+          formData.append("images", file);
+        });
+      }
+
+      const response = await instance.post("persons", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 
-  updatePerson: async (id, data) => {
+  updatePerson: async (id, personData, imageFiles) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await instance.put(`persons/${id}`, data, {
+      const formData = new FormData();
+
+      // Tạo Blob cho person data giống như cinema
+      const personBlob = new Blob([JSON.stringify(personData)], {
+        type: "application/json",
+      });
+      formData.append("person", personBlob);
+
+      // Add image files
+      if (imageFiles && imageFiles.length > 0) {
+        imageFiles.forEach((file, index) => {
+          formData.append("images", file);
+        });
+      }
+
+      const response = await instance.put(`persons/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 
@@ -82,7 +112,7 @@ export const personService = {
       });
       return response;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message; // Thêm dòng này
     }
   },
 };
