@@ -87,7 +87,7 @@ export const personService = {
       // Add image files
       if (imageFiles && imageFiles.length > 0) {
         imageFiles.forEach((file, index) => {
-          formData.append("images", file);
+          formData.append("thumbnail", file);
         });
       }
 

@@ -8,6 +8,7 @@ import LoginCustomer from "../../pages/Customer/Auth/LoginCustomer";
 import MovieGenre from "../../pages/Customer/Cinema/MovieGenre";
 import Actor from "../../pages/Customer/Cinema/Actor";
 import Director from "../../pages/Customer/Cinema/Director";
+import DirectorDetail from "../../pages/Customer/Cinema/DirectorDetail";
 import MovieReview from "../../pages/Customer/Cinema/MovieReview";
 import MovieBlog from "../../pages/Customer/Cinema/MovieBlog";
 import LoginAdmin from "../../pages/Admin/Login/LoginAdmin";
@@ -56,6 +57,11 @@ export const PublicRoutes = [
   {
     path: ROUTES.MOVIE_DIRECTOR,
     element: <Director />,
+    layout: MainLayout,
+  },
+  {
+    path: ROUTES.MOVIE_DIRECTOR_DETAIL,
+    element: <DirectorDetail />,
     layout: MainLayout,
   },
   {

@@ -7,6 +7,7 @@ export const ROUTES = {
   MOVIE_GENRE: "/dien-anh",
   MOVIE_ACTOR: "/dien-vien",
   MOVIE_DIRECTOR: "/dao-dien",
+  MOVIE_DIRECTOR_DETAIL: "/dao-dien/:id",
   MOVIE_REVIEW: "/binh-luan-phim",
   MOVIE_BLOG: "/blog-dien-anh",
   TICKET: "/mua-ve",

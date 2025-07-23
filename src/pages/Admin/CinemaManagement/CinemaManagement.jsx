@@ -23,6 +23,7 @@ import {
   Upload,
   message,
 } from "antd";
+import { toast } from "react-toastify";
 import {
   SearchOutlined,
   HomeOutlined,
@@ -57,13 +58,14 @@ const CinemaManagement = () => {
     try {
       setLoading(true);
       const response = await cinemaService.getAllCinemas();
-      if (response?.result) {
+      if (response?.success !== false && response?.result) {
         setCinemas(response.result);
       } else {
-        throw new Error(response?.message || "Không tìm thấy dữ liệu");
+        toast.error(response?.message || "Không tìm thấy dữ liệu");
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách rạp chiếu phim:", error);
+      toast.error(error.message || "Không thể tải danh sách rạp chiếu phim");
     } finally {
       setLoading(false);
     }
@@ -78,13 +80,14 @@ const CinemaManagement = () => {
     try {
       setDetailsLoading(true);
       const response = await cinemaService.getCinemaById(id);
-      if (response?.result) {
+      if (response?.success !== false && response?.result) {
         setCinemaDetails(response.result);
       } else {
-        throw new Error(response?.message || "Không tìm thấy chi tiết");
+        toast.error(response?.message || "Không tìm thấy chi tiết");
       }
     } catch (error) {
       console.error("Lỗi khi lấy chi tiết rạp chiếu phim:", error);
+      toast.error(error.message || "Không thể tải chi tiết rạp chiếu phim");
     } finally {
       setDetailsLoading(false);
     }
@@ -101,21 +104,32 @@ const CinemaManagement = () => {
   const handleActivateCinema = async (id, currentStatus) => {
     try {
       const newStatus = !currentStatus;
-      await cinemaService.activateCinema(id, newStatus);
-      setCinemas(
-        cinemas.map((cinema) =>
-          cinema.id === id ? { ...cinema, active: newStatus } : cinema
-        )
-      );
-      message.success(
-        `Rạp chiếu phim đã ${
-          newStatus ? "kích hoạt" : "vô hiệu hóa"
-        } thành công`
-      );
+      const response = await cinemaService.activateCinema(id, newStatus);
+
+      if (response?.success !== false) {
+        setCinemas(
+          cinemas.map((cinema) =>
+            cinema.id === id ? { ...cinema, active: newStatus } : cinema
+          )
+        );
+        toast.success(
+          `Rạp chiếu phim đã ${
+            newStatus ? "kích hoạt" : "vô hiệu hóa"
+          } thành công`
+        );
+      } else {
+        toast.error(
+          response?.message ||
+            `Không thể ${
+              newStatus ? "kích hoạt" : "vô hiệu hóa"
+            } rạp chiếu phim`
+        );
+      }
     } catch (error) {
       console.error("Lỗi khi thay đổi trạng thái rạp chiếu phim:", error);
-      message.error(
-        `Không thể ${newStatus ? "kích hoạt" : "vô hiệu hóa"} rạp chiếu phim`
+      toast.error(
+        error.message ||
+          `Không thể ${newStatus ? "kích hoạt" : "vô hiệu hóa"} rạp chiếu phim`
       );
     }
   };
@@ -142,7 +156,7 @@ const CinemaManagement = () => {
       try {
         setLoading(true);
         const response = await cinemaService.getCinemaById(id);
-        if (response?.result) {
+        if (response?.success !== false && response?.result) {
           const cinemaData = response.result;
           form.setFieldsValue({
             name: cinemaData.name,
@@ -155,11 +169,18 @@ const CinemaManagement = () => {
               roomType: room.roomType,
             })) || [{}],
           });
+        } else {
+          toast.error(
+            response?.message || "Không thể tải thông tin rạp chiếu phim"
+          );
         }
       } catch (error) {
         console.error(
           "Lỗi khi lấy chi tiết rạp chiếu phim để chỉnh sửa:",
           error
+        );
+        toast.error(
+          error.message || "Không thể tải thông tin rạp chiếu phim để chỉnh sửa"
         );
       } finally {
         setLoading(false);
@@ -194,16 +215,28 @@ const CinemaManagement = () => {
         requestBody.id = selectedCinemaId;
       }
 
-      await cinemaService.createCinema(requestBody, thumbnailFile);
-      message.success(
-        `${selectedCinemaId ? "Cập nhật" : "Tạo"} rạp chiếu phim thành công`
+      const response = await cinemaService.createCinema(
+        requestBody,
+        thumbnailFile
       );
-      fetchCinemas();
-      setIsModalVisible(false);
+
+      if (response?.success !== false) {
+        toast.success(
+          `${selectedCinemaId ? "Cập nhật" : "Tạo"} rạp chiếu phim thành công`
+        );
+        fetchCinemas();
+        setIsModalVisible(false);
+      } else {
+        toast.error(
+          response?.message ||
+            `Không thể ${selectedCinemaId ? "cập nhật" : "tạo"} rạp chiếu phim`
+        );
+      }
     } catch (error) {
       console.error("Lỗi khi tạo/cập nhật rạp chiếu phim:", error);
-      message.error(
-        `Không thể ${selectedCinemaId ? "cập nhật" : "tạo"} rạp chiếu phim`
+      toast.error(
+        error.message ||
+          `Không thể ${selectedCinemaId ? "cập nhật" : "tạo"} rạp chiếu phim`
       );
     }
   };

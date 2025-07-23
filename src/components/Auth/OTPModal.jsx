@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { authService } from "../../services/auth";
+import { toast } from "react-toastify";
 
 const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -56,6 +57,7 @@ const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
     const otpCode = otp.join("");
 
     if (otpCode.length !== 6) {
+      toast.error("Vui lòng nhập đủ 6 số OTP");
       setError("Vui lòng nhập đủ 6 số OTP");
       return;
     }
@@ -66,20 +68,24 @@ const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
 
     try {
       const response = await authService.confirmOTP(email, otpCode, otpType);
+
       if (response.code === 200) {
+        toast.success("Xác thực thành công!");
         setSuccess("Xác thực thành công!");
         setTimeout(() => {
           onSuccess(response);
           handleClose();
         }, 1500);
       } else {
+        toast.error(response.message || "Mã OTP không chính xác");
         setError(response.message || "Mã OTP không chính xác");
       }
     } catch (error) {
-      setError(
+      const errorMessage =
         error.response?.data?.message ||
-          "Xác thực OTP thất bại. Vui lòng thử lại!"
-      );
+        "Xác thực OTP thất bại. Vui lòng thử lại!";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -95,18 +101,21 @@ const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
     try {
       const response = await authService.resendOTP(email, otpType);
       if (response.code === 200) {
+        toast.success("Mã OTP đã được gửi lại!");
         setSuccess("Mã OTP đã được gửi lại!");
         setResendTimer(60); // 60 giây countdown
         setOtp(["", "", "", "", "", ""]); // Reset OTP input
         inputRefs.current[0]?.focus(); // Focus về ô đầu tiên
       } else {
+        toast.error(response.message || "Gửi lại OTP thất bại");
         setError(response.message || "Gửi lại OTP thất bại");
       }
     } catch (error) {
-      setError(
+      const errorMessage =
         error.response?.data?.message ||
-          "Gửi lại OTP thất bại. Vui lòng thử lại!"
-      );
+        "Gửi lại OTP thất bại. Vui lòng thử lại!";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsResending(false);
     }
@@ -115,7 +124,7 @@ const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
   const getTitle = () => {
     switch (otpType) {
       case "REGISTER":
-        return "Xác Nhận Đăng Ký";
+        return "Xác Thực Tài Khoản";
       case "FORGOT_PASSWORD":
         return "Xác Nhận Quên Mật Khẩu";
       default:
@@ -126,7 +135,7 @@ const OTPModal = ({ email, onClose, onSuccess, otpType = "REGISTER" }) => {
   const getDescription = () => {
     switch (otpType) {
       case "REGISTER":
-        return "Vui lòng nhập mã OTP để hoàn tất quá trình đăng ký";
+        return "Vui lòng nhập mã OTP để xác thực tài khoản";
       case "FORGOT_PASSWORD":
         return "Vui lòng nhập mã OTP để đặt lại mật khẩu";
       default:

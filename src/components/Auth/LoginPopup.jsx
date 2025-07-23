@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authService } from "../../services/auth";
 import OTPModal from "./OTPModal";
+import { toast } from "react-toastify";
 
 const illustration = "https://cdn-icons-png.flaticon.com/512/616/616408.png";
 
@@ -54,30 +55,40 @@ const LoginPopup = ({ onClose }) => {
       const response = await authService.login(email, password);
 
       if (response.code === 200) {
-        // Kiểm tra xem có cần OTP không
-        if (response.result.requireOTP) {
-          // Cần OTP - hiển thị modal OTP cho đăng nhập
-          setPendingEmail(email);
-          setPendingLoginData(response.result);
-          setOtpType("LOGIN");
-          setShowOTPModal(true);
-        } else {
-          // Không cần OTP - đăng nhập thành công
-          const userData = {
-            token: response.result.accessToken,
-          };
-          localStorage.setItem("token", userData.token);
-          login(userData);
-          handleClose();
-          window.location.reload();
-        }
+        // Không cần OTP - đăng nhập thành công
+        toast.success("Đăng nhập thành công!");
+        const userData = {
+          token: response.result.accessToken,
+        };
+        localStorage.setItem("token", userData.token);
+        login(userData);
+        handleClose();
+        window.location.reload();
       } else {
+        toast.error(
+          response.message || "Đăng nhập thất bại. Vui lòng thử lại!"
+        );
         setError(response.message || "Đăng nhập thất bại. Vui lòng thử lại!");
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại!"
-      );
+      // Kiểm tra nếu là lỗi 401 và yêu cầu xác thực OTP
+      if (
+        error.response?.status === 401 &&
+        (error.response?.data?.message?.includes("OTP") ||
+          error.response?.data?.message?.includes("xác thực"))
+      ) {
+        // Cần OTP - hiển thị modal OTP cho đăng nhập
+        toast.info("Vui lòng xác thực tài khoản bằng mã OTP");
+        setPendingEmail(email);
+        setOtpType("REGISTER"); // Sử dụng REGISTER cho cả đăng nhập lần đầu
+        setShowOTPModal(true);
+      } else {
+        const errorMessage =
+          error.response?.data?.message ||
+          "Đăng nhập thất bại. Vui lòng thử lại!";
+        toast.error(errorMessage);
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -101,16 +112,19 @@ const LoginPopup = ({ onClose }) => {
 
       if (response.code === 200) {
         // Thành công - hiển thị modal OTP cho đăng ký
+        toast.info("Vui lòng xác thực tài khoản bằng mã OTP");
         setPendingEmail(regEmail);
         setOtpType("REGISTER");
         setShowOTPModal(true);
       } else {
+        toast.error(response.message || "Đăng ký thất bại. Vui lòng thử lại!");
         setError(response.message || "Đăng ký thất bại. Vui lòng thử lại!");
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!"
-      );
+      const errorMessage =
+        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -119,6 +133,7 @@ const LoginPopup = ({ onClose }) => {
   // Xử lý khi OTP đăng ký thành công - CHUYỂN THẲNG VỀ LOGIN
   const handleRegisterOTPSuccess = () => {
     setShowOTPModal(false);
+    toast.success("Đăng ký và xác thực thành công! Vui lòng đăng nhập.");
     setSuccess("Đăng ký và xác thực thành công! Vui lòng đăng nhập.");
 
     // Chuyển về form đăng nhập ngay lập tức
@@ -139,6 +154,7 @@ const LoginPopup = ({ onClose }) => {
 
   // Xử lý khi OTP đăng nhập thành công
   const handleLoginOTPSuccess = (otpResponse) => {
+    toast.success("Xác thực thành công! Đăng nhập thành công.");
     const userData = {
       token: otpResponse.result.accessToken,
     };
@@ -161,6 +177,7 @@ const LoginPopup = ({ onClose }) => {
     setShowOTPModal(false);
     setPendingEmail("");
     setPendingLoginData(null);
+    setError(""); // Clear any existing errors
   };
 
   // Hiển thị modal OTP nếu cần

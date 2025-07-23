@@ -137,7 +137,6 @@ const PersonManagement = () => {
       key: "occupation",
       render: (occupation) => (
         <Tag
-          icon={occupation === "DIRECTOR" ? <ManOutlined /> : <WomanOutlined />}
           color={occupation === "DIRECTOR" ? "blue" : "green"}
           style={{ borderRadius: "16px", padding: "4px 12px" }}
         >
@@ -315,6 +314,8 @@ const PersonManagement = () => {
 
       setIsModalVisible(false);
       setModalLoading(false);
+      setFileList([]); // Clear the fileList state after successful operation
+      form.resetFields(); // Reset form fields
       fetchPersons();
     } catch (error) {
       message.error("Failed to save person.");
@@ -510,21 +511,11 @@ const PersonManagement = () => {
               items={[
                 {
                   key: "ACTOR",
-                  label: (
-                    <span>
-                      <WomanOutlined />
-                      Diễn viên
-                    </span>
-                  ),
+                  label: <span>Diễn viên</span>,
                 },
                 {
                   key: "DIRECTOR",
-                  label: (
-                    <span>
-                      <ManOutlined />
-                      Đạo diễn
-                    </span>
-                  ),
+                  label: <span>Đạo diễn</span>,
                 },
               ]}
             />

@@ -18,7 +18,7 @@ const menuOptions = {
   ],
 
   "Góc Điện Ảnh": [
-    { label: "Thể lọai phim", href: "/dien-anh" },
+    // { label: "Thể lọai phim", href: "/dien-anh" },
     { label: "Diễn viên", href: "/dien-vien" },
     { label: "Đạo diễn", href: "/dao-dien" },
   ],

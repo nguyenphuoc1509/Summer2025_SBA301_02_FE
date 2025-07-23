@@ -102,6 +102,21 @@ const bookingService = {
     }
   },
 
+  // Get user ticket history
+  getUserTicketHistory: async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await instance.get(`bookings/my-history-tickets`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error.response || error.message;
+    }
+  },
+
   // Đặt vé offline cho admin/manager
   bookSeatsOffline: async (cinemaId, customerId, showtimeId, seatCodes) => {
     try {

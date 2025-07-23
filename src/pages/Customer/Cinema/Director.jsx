@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import FilterBar from "../../../components/Cinema/FilterBar";
 import ItemList from "../../../components/Cinema/ItemList";
 import { personService } from "../../../services/personManagement/personService";
+import { ROUTES } from "../../../router/constants";
 
 const Director = () => {
   const [directors, setDirectors] = useState([]);
-  const [genre, setGenre] = useState("");
+  const [countries, setCountries] = useState([]);
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +28,24 @@ const Director = () => {
               : "",
           title: director.name,
           description: director.biography || director.description || "",
-          views: 1000, // Placeholder value
+          views: 1000 + Math.floor(Math.random() * 1000), // Placeholder value
           likes: 500, // Placeholder value
-          genre: "", // These can be populated if needed
           country: director.country || "",
+          linkTo: ROUTES.MOVIE_DIRECTOR_DETAIL.replace(":id", director.id), // Use route constant
         }));
+
         setDirectors(directorsData);
+
+        // Extract unique countries for the filter
+        const uniqueCountries = [
+          ...new Set(
+            directorsData
+              .filter((director) => director.country)
+              .map((director) => director.country)
+          ),
+        ];
+
+        setCountries(uniqueCountries);
       }
     } catch (error) {
       console.error("Error fetching directors:", error);
@@ -42,31 +56,18 @@ const Director = () => {
 
   const filters = [
     {
-      label: "Thể Loại",
-      value: genre,
-      onChange: setGenre,
-      options: [
-        { label: "Tất cả", value: "" },
-        { label: "Hành động", value: "action" },
-        // ...
-      ],
-    },
-    {
       label: "Quốc Gia",
       value: country,
       onChange: setCountry,
       options: [
         { label: "Tất cả", value: "" },
-        { label: "Mỹ", value: "us" },
-        // ...
+        ...countries.map((country) => ({ label: country, value: country })),
       ],
     },
   ];
 
   const filteredDirectors = directors.filter(
-    (director) =>
-      (genre === "" || director.genre === genre) &&
-      (country === "" || director.country === country)
+    (director) => country === "" || director.country === country
   );
 
   return (
