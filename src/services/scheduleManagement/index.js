@@ -12,7 +12,8 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in createSchedule:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 
@@ -27,12 +28,13 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in updateSchedule:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 
   // Activate or deactivate movie schedule
-  toggleScheduleStatus: async (id, isActive) => {
+  toggleScheduleStatus: async (id, status) => {
     try {
       const token = localStorage.getItem("token");
       const response = await instance.put(
@@ -43,13 +45,14 @@ const scheduleService = {
             Authorization: `Bearer ${token}`,
           },
           params: {
-            active: isActive,
+            status: status,
           },
         }
       );
       return response;
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in toggleScheduleStatus:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 
@@ -62,7 +65,8 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in getShowtimesByMovie:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 
@@ -75,7 +79,8 @@ const scheduleService = {
       });
       return response;
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in getShowtimesByCinema:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 
@@ -90,7 +95,8 @@ const scheduleService = {
       });
       return response?.result?.roomResponseList || [];
     } catch (error) {
-      throw error.response || error.message;
+      console.error("Error in getRoomsByCinema:", error.response || error);
+      throw error.response?.data || error.response || error;
     }
   },
 };

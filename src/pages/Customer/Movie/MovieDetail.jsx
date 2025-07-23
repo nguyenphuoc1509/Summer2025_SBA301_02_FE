@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { movieService } from "../../../services/movieManagement/movieService";
 import scheduleService from "../../../services/scheduleManagement";
+import { toast } from "react-toastify";
 
 const MovieDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
   const [movie, setMovie] = useState(null);
   const [nowShowing, setNowShowing] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +144,20 @@ const MovieDetail = () => {
   };
 
   const handleShowtimeClick = (showtime, cinemaName) => {
-    // Navigate to seat selection page with minimal showtime details
+    // Check if user is logged in
+    if (!token) {
+      toast.warning("Vui lòng đăng nhập để đặt vé xem phim", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return; // Stop execution if not logged in
+    }
+
+    // If logged in, navigate to seat selection page
     navigate(`/choose-seat/${showtime.id}`);
   };
 

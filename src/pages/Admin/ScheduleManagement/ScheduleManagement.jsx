@@ -16,9 +16,12 @@ import {
 } from "antd";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import scheduleService from "../../../services/scheduleManagement";
 import { movieService } from "../../../services/movieManagement/movieService";
 import cinemaService from "../../../services/cinemaManagement/cinemaService";
+import { ToastContainer } from "react-toastify";
 
 const { TabPane } = Tabs;
 
@@ -59,7 +62,7 @@ const ScheduleManagement = () => {
         }
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        message.error("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+        toast.error("Không thể tải dữ liệu. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }
@@ -131,7 +134,7 @@ const ScheduleManagement = () => {
       setSchedules(processedSchedules);
     } catch (error) {
       console.error("Error fetching cinema data:", error);
-      message.error("Không thể tải dữ liệu rạp chiếu. Vui lòng thử lại sau.");
+      toast.error("Không thể tải dữ liệu rạp chiếu. Vui lòng thử lại sau.");
       setRooms([]);
       setSchedules([]);
     } finally {
@@ -184,7 +187,7 @@ const ScheduleManagement = () => {
       setSchedules(flattenedSchedules);
     } catch (error) {
       console.error("Error fetching movie schedules:", error);
-      message.error("Không thể tải lịch chiếu phim. Vui lòng thử lại sau.");
+      toast.error("Không thể tải lịch chiếu phim. Vui lòng thử lại sau.");
       setSchedules([]);
     } finally {
       setLoading(false);
@@ -224,7 +227,7 @@ const ScheduleManagement = () => {
       setRooms(Array.isArray(roomsData) ? roomsData : []);
     } catch (error) {
       console.error("Error fetching rooms:", error);
-      message.error("Không thể tải danh sách phòng. Vui lòng thử lại sau.");
+      toast.error("Không thể tải danh sách phòng. Vui lòng thử lại sau.");
       setRooms([]);
     }
   };
@@ -323,29 +326,52 @@ const ScheduleManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await scheduleService.toggleScheduleStatus(id, false);
-      message.success("Xóa lịch chiếu thành công");
+      const response = await scheduleService.toggleScheduleStatus(
+        id,
+        "INACTIVE"
+      );
+      if (response.code === 200) {
+        toast.success(response.message || "Xóa lịch chiếu thành công");
+      } else {
+        toast.error(response.message || "Có lỗi xảy ra khi xóa lịch chiếu");
+      }
       refreshSchedules();
     } catch (error) {
       console.error("Error deleting schedule:", error);
-      message.error("Không thể xóa lịch chiếu. Vui lòng thử lại sau.");
+      // Extract error message from the response structure
+      const errorMessage =
+        error?.message || "Không thể xóa lịch chiếu. Vui lòng thử lại sau.";
+      toast.error(errorMessage);
     }
   };
 
   const handleToggleStatus = async (id, active) => {
     try {
-      await scheduleService.toggleScheduleStatus(id, active);
-      message.success(
-        `${active ? "Kích hoạt" : "Ngừng chiếu"} lịch chiếu thành công`
-      );
+      const status = active ? "ACTIVE" : "INACTIVE";
+      const response = await scheduleService.toggleScheduleStatus(id, status);
+      if (response.code === 200) {
+        toast.success(
+          response.message ||
+            `${active ? "Kích hoạt" : "Ngừng chiếu"} lịch chiếu thành công`
+        );
+      } else {
+        toast.error(
+          response.message ||
+            `Có lỗi xảy ra khi ${
+              active ? "kích hoạt" : "ngừng chiếu"
+            } lịch chiếu`
+        );
+      }
       refreshSchedules();
     } catch (error) {
       console.error("Error toggling schedule status:", error);
-      message.error(
+      // Extract error message from the response structure
+      const errorMessage =
+        error?.message ||
         `Không thể ${
           active ? "kích hoạt" : "ngừng chiếu"
-        } lịch chiếu. Vui lòng thử lại sau.`
-      );
+        } lịch chiếu. Vui lòng thử lại sau.`;
+      toast.error(errorMessage);
     }
   };
 
@@ -360,21 +386,36 @@ const ScheduleManagement = () => {
         ticketPrice: values.ticketPrice,
       };
 
+      let response;
       if (editingSchedule) {
-        await scheduleService.updateSchedule(editingSchedule.id, scheduleData);
-        message.success("Cập nhật lịch chiếu thành công");
+        response = await scheduleService.updateSchedule(
+          editingSchedule.id,
+          scheduleData
+        );
+        if (response.code === 200) {
+          toast.success(response.message || "Cập nhật lịch chiếu thành công");
+        } else {
+          toast.error(
+            response.message || "Có lỗi xảy ra khi cập nhật lịch chiếu"
+          );
+        }
       } else {
-        await scheduleService.createSchedule(scheduleData);
-        message.success("Thêm lịch chiếu thành công");
+        response = await scheduleService.createSchedule(scheduleData);
+        if (response.code === 200) {
+          toast.success(response.message || "Thêm lịch chiếu thành công");
+        } else {
+          toast.error(response.message || "Có lỗi xảy ra khi thêm lịch chiếu");
+        }
       }
 
       setIsModalVisible(false);
       refreshSchedules();
     } catch (error) {
       console.error("Error saving schedule:", error);
-      message.error(
-        "Không thể lưu lịch chiếu. Vui lòng kiểm tra lại thông tin."
-      );
+      const errorMessage =
+        error?.message ||
+        "Không thể lưu lịch chiếu. Vui lòng kiểm tra lại thông tin.";
+      toast.error(errorMessage);
     }
   };
 
@@ -470,7 +511,9 @@ const ScheduleManagement = () => {
       }
     } catch (error) {
       console.error("Error refreshing schedules:", error);
-      message.error("Không thể cập nhật danh sách lịch chiếu.");
+      const errorMessage =
+        error?.message || "Không thể cập nhật danh sách lịch chiếu.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -482,6 +525,7 @@ const ScheduleManagement = () => {
 
   return (
     <div style={{ padding: "24px" }}>
+      <ToastContainer position="top-right" autoClose={3000} />
       <div
         style={{
           marginBottom: "16px",
