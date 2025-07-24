@@ -15,7 +15,7 @@ export const ROUTES = {
   EVENT_DETAIL: "/uu-dai/:slug",
   CHOOSE_SEAT: "/choose-seat/:showtimeId",
   PAYMENT: "/payment",
-  PAYMENT_SUCCESS: "/payments/success",
+  PAYMENT_SUCCESS: "/payment/success",
   CONFIRM: "/confirm",
   VNPAY_CALLBACK: "/api/payments/vnpay/callback",
   CINEMA_SYSTEM: "/he-thong-rap",
@@ -34,5 +34,6 @@ export const ROUTES = {
   GENRE_MANAGEMENT: "/admin/quan-ly-loai-phim",
   PERSON_MANAGEMENT: "/admin/quan-ly-dao-dien-dien-vien",
   COUNTRY_MANAGEMENT: "/admin/quan-ly-quoc-gia",
+  TICKET_MANAGEMENT: "/admin/quan-ly-ve",
   LOGIN_ADMIN: "/admin",
 };

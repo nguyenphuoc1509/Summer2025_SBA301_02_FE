@@ -125,7 +125,8 @@ const ScheduleManagement = () => {
             showtime: showtime.showTime,
             showDate: showtime.showTime,
             ticketPrice: 0, // Default value as it's not in the response
-            active: true, // Assuming active if returned in results
+            active: showtime.status === "ACTIVE", // Use status from API response
+            status: showtime.status, // Store the raw status value
           });
         });
       });
@@ -178,7 +179,8 @@ const ScheduleManagement = () => {
             showtime: showtime.showTime,
             showDate: showtime.showTime, // Same as showtime for rendering
             ticketPrice: showtime.ticketPrice || 0,
-            active: true, // Assuming active if returned in results
+            active: showtime.status === "ACTIVE", // Use status from API response
+            status: showtime.status, // Store the raw status value
           });
         });
       });
@@ -274,6 +276,16 @@ const ScheduleManagement = () => {
       render: (time) => dayjs(time).format("HH:mm"),
     },
     {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "ACTIVE" ? "green" : "red"}>
+          {status === "ACTIVE" ? "Đang chiếu" : "Ngừng chiếu"}
+        </Tag>
+      ),
+    },
+    {
       title: "Thao tác",
       key: "actions",
       render: (_, record) => (
@@ -290,10 +302,12 @@ const ScheduleManagement = () => {
             <Button danger>Xóa</Button>
           </Popconfirm>
           <Button
-            type={record.active ? "default" : "primary"}
-            onClick={() => handleToggleStatus(record.id, !record.active)}
+            type={record.status === "ACTIVE" ? "default" : "primary"}
+            onClick={() =>
+              handleToggleStatus(record.id, record.status !== "ACTIVE")
+            }
           >
-            {record.active ? "Ngừng chiếu" : "Kích hoạt"}
+            {record.status === "ACTIVE" ? "Ngừng chiếu" : "Kích hoạt"}
           </Button>
         </Space>
       ),
@@ -466,7 +480,8 @@ const ScheduleManagement = () => {
               showtime: showtime.showTime,
               showDate: showtime.showTime,
               ticketPrice: 0, // Default value as it's not in the response
-              active: true, // Assuming active if returned in results
+              active: showtime.status === "ACTIVE", // Use status from API response
+              status: showtime.status || "ACTIVE", // Store the raw status value
             });
           });
         });
@@ -502,7 +517,8 @@ const ScheduleManagement = () => {
               showtime: showtime.showTime,
               showDate: showtime.showTime, // Same as showtime for rendering
               ticketPrice: showtime.ticketPrice || 0,
-              active: true, // Assuming active if returned in results
+              active: showtime.status === "ACTIVE", // Use status from API response
+              status: showtime.status || "ACTIVE", // Store the raw status value
             });
           });
         });

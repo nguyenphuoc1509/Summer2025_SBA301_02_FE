@@ -17,13 +17,21 @@ export const AdminGuard = ({ children }) => {
     user?.roles || JSON.parse(localStorage.getItem("roleNames") || "[]");
 
   useEffect(() => {
-    if (!roles.includes("ADMIN")) {
+    if (
+      !roles.includes("ADMIN") &&
+      !roles.includes("MANAGER") &&
+      !roles.includes("STAFF")
+    ) {
       message.error("Bạn không có quyền truy cập vào trang này!");
       navigate(ROUTES.HOME);
     }
   }, [roles, navigate]);
 
-  if (!roles.includes("ADMIN")) {
+  if (
+    !roles.includes("ADMIN") &&
+    !roles.includes("MANAGER") &&
+    !roles.includes("STAFF")
+  ) {
     return null;
   }
 

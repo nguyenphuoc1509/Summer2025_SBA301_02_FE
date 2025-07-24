@@ -11,17 +11,28 @@ import {
 } from "react-icons/md";
 import { AiOutlineProduct } from "react-icons/ai";
 import { SiTicktick } from "react-icons/si";
+import { useAuth } from "../../hooks/useAuth";
 
 const Sidebar = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const roles =
+    user?.roles || JSON.parse(localStorage.getItem("roleNames") || "[]");
+  const isAdmin = roles.includes("ADMIN");
 
   const menuItems = [
-    { title: "Tổng quan", icon: RiDashboardLine, path: "/thong-ke" },
-    {
-      title: "Quản lý người dùng",
-      icon: FiUsers,
-      path: "/admin/quan-ly-nguoi-dung",
-    },
+    ...(isAdmin
+      ? [{ title: "Tổng quan", icon: RiDashboardLine, path: "/thong-ke" }]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            title: "Quản lý người dùng",
+            icon: FiUsers,
+            path: "/admin/quan-ly-nguoi-dung",
+          },
+        ]
+      : []),
     {
       title: "Quản lí phim",
       icon: SiTicktick,
@@ -53,9 +64,9 @@ const Sidebar = () => {
       path: "/admin/quan-ly-quoc-gia",
     },
     {
-      title: "Quản lý blog",
+      title: "Quản lý vé",
       icon: MdProductionQuantityLimits,
-      path: "/admin/quan-ly-blog",
+      path: "/admin/quan-ly-ve",
     },
     // { title: "Analytics", icon: IoStatsChartOutline, path: "/admin/analytics" },
     // { title: "Settings", icon: FiSettings, path: "/admin/settings" },
